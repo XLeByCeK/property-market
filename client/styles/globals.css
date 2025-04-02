@@ -744,4 +744,136 @@ body {
   .property-grid {
     grid-template-columns: 1fr;
   }
+}
+
+/* Mobile styles for search banner */
+@media (max-width: 991.98px) {
+  .search-banner {
+    height: auto;
+    min-height: 300px;
+    margin-top: 3.5rem;
+    margin-bottom: 1rem;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .search-banner-content {
+    padding: 1rem;
+    height: auto;
+  }
+
+  .search-banner-title {
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .search-banner-actions {
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 0;
+  }
+
+  .action-buttons-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    width: 100%;
+  }
+
+  .action-button {
+    flex: 1 1 calc(50% - 0.25rem);
+    min-width: calc(50% - 0.25rem);
+    padding: 0.75rem;
+    font-size: 0.875rem;
+    border-radius: 0.375rem;
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .action-button.primary {
+    flex: 1 1 100%;
+    min-width: 100%;
+  }
+
+  .search-banner-form {
+    width: 100%;
+    margin-top: 1rem;
+    background-color: rgba(255, 255, 255, 0.1);
+    padding: 1rem;
+    border-radius: 0.5rem;
+    backdrop-filter: blur(4px);
+  }
+
+  .search-inputs {
+    flex-direction: column;
+    gap: 0.5rem;
+    width: 100%;
+  }
+
+  .search-input {
+    width: 100%;
+    padding: 0.75rem;
+    font-size: 0.875rem;
+    border-radius: 0.375rem;
+    background-color: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+  }
+
+  .price-inputs {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .search-buttons {
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-top: 1rem;
+  }
+
+  .search-button {
+    width: 100%;
+    padding: 0.75rem;
+    font-size: 0.875rem;
+    border-radius: 0.375rem;
+    background-color: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+  }
+
+  .search-button.primary {
+    background-color: rgb(37 99 235);
+    color: white;
+    border: none;
+  }
+
+  .search-button.primary:hover {
+    background-color: rgb(29 78 216);
+  }
+}
+
+/* Additional mobile optimizations */
+@media (max-width: 575.98px) {
+  .search-banner {
+    min-height: 250px;
+  }
+
+  .search-banner-title {
+    font-size: 1.25rem;
+  }
+
+  .action-button,
+  .search-button {
+    padding: 0.625rem;
+    font-size: 0.8125rem;
+  }
+
+  .search-input {
+    padding: 0.625rem;
+    font-size: 0.8125rem;
+  }
+
+  .search-banner-form {
+    padding: 0.75rem;
+  }
 } 

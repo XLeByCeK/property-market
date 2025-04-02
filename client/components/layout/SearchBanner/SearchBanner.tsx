@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { useCity } from '../../../context/CityContext';
 
@@ -21,6 +21,20 @@ export const SearchBanner: React.FC<SearchBannerProps> = ({
   const [guests, setGuests] = useState('');
   const [checkIn, setCheckIn] = useState('');
   const [checkOut, setCheckOut] = useState('');
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 991.98);
+    };
+
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+
+    return () => {
+      window.removeEventListener('resize', checkMobile);
+    };
+  }, []);
 
   const propertyTypes = [
     { value: 'apartment', label: 'Квартира' },
@@ -165,28 +179,32 @@ export const SearchBanner: React.FC<SearchBannerProps> = ({
         <h1 className="search-banner-title">Недвижимость в городе {selectedCity}</h1>
         
         <div className="search-banner-actions">
-          <button
-            className={`action-button ${searchMode === 'buy' ? 'active' : ''}`}
-            onClick={() => setSearchMode('buy')}
-          >
-            Купить
-          </button>
-          <button
-            className={`action-button ${searchMode === 'rent' ? 'active' : ''}`}
-            onClick={() => setSearchMode('rent')}
-          >
-            Снять
-          </button>
-          <button
-            className={`action-button ${searchMode === 'daily' ? 'active' : ''}`}
-            onClick={() => setSearchMode('daily')}
-          >
-            Посуточно
-          </button>
-          <button className="action-button">Оценить</button>
-          <button className="action-button">Ипотека</button>
-          <button className="action-button">Подбор риелтора</button>
-          <button className="action-button primary">Выставить объявление</button>
+          <div className="action-buttons-row">
+            <button
+              className={`action-button ${searchMode === 'buy' ? 'active' : ''}`}
+              onClick={() => setSearchMode('buy')}
+            >
+              Купить
+            </button>
+            <button
+              className={`action-button ${searchMode === 'rent' ? 'active' : ''}`}
+              onClick={() => setSearchMode('rent')}
+            >
+              Снять
+            </button>
+            <button
+              className={`action-button ${searchMode === 'daily' ? 'active' : ''}`}
+              onClick={() => setSearchMode('daily')}
+            >
+              Посуточно
+            </button>
+          </div>
+          <div className="action-buttons-row">
+            <button className="action-button">Оценить</button>
+            <button className="action-button">Ипотека</button>
+            <button className="action-button">Подбор риелтора</button>
+            <button className="action-button primary">Выставить объявление</button>
+          </div>
           <div className="search-banner-form">
             <div className="search-inputs">
               {renderSearchInputs()}
