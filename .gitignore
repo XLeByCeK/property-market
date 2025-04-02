@@ -11,6 +11,7 @@
 /dist
 /.next/
 /out/
+/client/.next/
 
 # misc
 .DS_Store

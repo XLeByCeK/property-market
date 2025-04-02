@@ -339,29 +339,43 @@ body {
 /* Search Banner */
 .search-banner {
   position: relative;
-  background-color: white;
-  padding: 2rem 0;
+  height: 400px;
   margin-top: 4rem;
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
+  margin-bottom: 2rem;
+  overflow: hidden;
+}
+
+.search-banner-background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+}
+
+.search-banner-background img {
+  object-fit: cover;
+  object-position: center;
 }
 
 .search-banner-overlay {
   position: absolute;
   top: 0;
   left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(to right, rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.3));
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.6);
+  z-index: 2;
 }
 
 .search-banner-content {
   position: relative;
   max-width: 1280px;
   margin: 0 auto;
-  padding: 0 1rem;
-  z-index: 1;
+  padding: 2rem 1rem;
+  color: white;
+  z-index: 3;
 }
 
 .search-banner-title {
@@ -625,15 +639,12 @@ body {
 .property-card-image {
   position: relative;
   width: 100%;
-  height: 0;
-  padding-bottom: 66.67%; /* 3:2 aspect ratio */
+  height: 200px;
   overflow: hidden;
+  border-radius: 0.5rem 0.5rem 0 0;
 }
 
 .property-image {
-  position: absolute;
-  top: 0;
-  left: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;

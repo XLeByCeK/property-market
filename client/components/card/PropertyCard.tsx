@@ -41,8 +41,8 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({
           alt={`${propertyType} ${rooms}`}
           width={300}
           height={200}
-          className="property-image"
-          layout="responsive"
+          priority
+          className="property-image object-cover"
         />
         <button 
           className={`favorite-button ${isFavorite ? 'active' : ''}`}

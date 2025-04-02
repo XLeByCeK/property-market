@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import Image from 'next/image';
 
 interface SearchBannerProps {
   selectedCity: string;
@@ -149,7 +150,16 @@ export const SearchBanner: React.FC<SearchBannerProps> = ({
   };
 
   return (
-    <div className="search-banner" style={{ backgroundImage: `url(${backgroundImage})` }}>
+    <div className="search-banner">
+      <div className="search-banner-background">
+        <Image
+          src={backgroundImage}
+          alt="Banner background"
+          fill
+          priority
+          className="object-cover"
+        />
+      </div>
       <div className="search-banner-overlay"></div>
       <div className="search-banner-content">
         <h1 className="search-banner-title">Недвижимость в {selectedCity}</h1>
