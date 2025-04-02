@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Image from 'next/image';
 import { Navbar } from './Navbar';
 import { CitySelector } from './CitySelector';
@@ -9,7 +9,7 @@ export const Header = () => {
     const mobileMenu = document.querySelector('.navbar-mobile');
     if (mobileMenu) {
       mobileMenu.classList.add('visible');
-      document.body.style.overflow = 'hidden'; // Prevent scrolling when menu is open
+      document.body.style.overflow = 'hidden';
     }
   };
 
