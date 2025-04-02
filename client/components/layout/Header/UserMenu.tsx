@@ -33,7 +33,7 @@ export const UserMenu = () => {
       <div className="user-menu-desktop">
         <button className="menu-item">Профиль</button>
         <button className="menu-item">Настройки</button>
-        <button className="menu-item">Выйти</button>
+        <button className="menu-item">Вход</button>
       </div>
 
       {/* Mobile version */}
@@ -58,7 +58,7 @@ export const UserMenu = () => {
         <div className="mobile-menu-content">
           <button className="menu-item" onClick={closeUserMenu}>Профиль</button>
           <button className="menu-item" onClick={closeUserMenu}>Настройки</button>
-          <button className="menu-item" onClick={closeUserMenu}>Выйти</button>
+          <button className="menu-item" onClick={closeUserMenu}>Вход</button>
         </div>
       </div>
     </div>

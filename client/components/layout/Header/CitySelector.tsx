@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
+import { useCity } from '../../../context/CityContext';
 
 export const CitySelector = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [selectedCity, setSelectedCity] = useState('Москва');
+  const { selectedCity, setSelectedCity } = useCity();
 
   const cities = ['Москва', 'Санкт-Петербург', 'Новосибирск', 'Екатеринбург', 'Казань'];
 

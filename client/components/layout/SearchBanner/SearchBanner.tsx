@@ -1,17 +1,17 @@
 import React, { useState } from 'react';
 import Image from 'next/image';
+import { useCity } from '../../../context/CityContext';
 
 interface SearchBannerProps {
-  selectedCity: string;
   backgroundImage?: string;
 }
 
 type SearchMode = 'buy' | 'rent' | 'daily';
 
 export const SearchBanner: React.FC<SearchBannerProps> = ({ 
-  selectedCity,
   backgroundImage = '/images/banner-bg.jpg'
 }) => {
+  const { selectedCity } = useCity();
   const [searchMode, setSearchMode] = useState<SearchMode>('buy');
   const [propertyType, setPropertyType] = useState('');
   const [rooms, setRooms] = useState('');
@@ -162,7 +162,7 @@ export const SearchBanner: React.FC<SearchBannerProps> = ({
       </div>
       <div className="search-banner-overlay"></div>
       <div className="search-banner-content">
-        <h1 className="search-banner-title">Недвижимость в {selectedCity}</h1>
+        <h1 className="search-banner-title">Недвижимость в городе {selectedCity}</h1>
         
         <div className="search-banner-actions">
           <button
