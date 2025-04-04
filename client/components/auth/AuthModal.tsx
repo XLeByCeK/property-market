@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { useAuth, RegisterData } from '../../context/AuthContext';
+import { useRouter } from 'next/router';
 
 type AuthMode = 'login' | 'register';
 
@@ -13,10 +15,15 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
     email: '',
     password: '',
     phone: '',
-    firstName: '',
-    lastName: '',
-    birthDate: '',
+    first_name: '',
+    last_name: '',
+    birth_date: '',
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
+  
+  const { login, register, error } = useAuth();
+  const router = useRouter();
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -26,10 +33,36 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Здесь будет логика отправки данных на сервер
-    console.log('Form submitted:', formData);
+    setFormError(null);
+    setIsSubmitting(true);
+    
+    try {
+      if (mode === 'login') {
+        await login(formData.email, formData.password);
+        onClose();
+        router.push('/profile');
+      } else {
+        const registerData: RegisterData = {
+          email: formData.email,
+          password: formData.password,
+          first_name: formData.first_name,
+          last_name: formData.last_name,
+          phone: formData.phone || undefined,
+          birth_date: formData.birth_date || undefined
+        };
+        
+        await register(registerData);
+        onClose();
+        router.push('/profile');
+      }
+    } catch (err) {
+      console.error('Authentication error:', err);
+      setFormError(error || 'Произошла ошибка при обработке запроса');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (!isOpen) return null;
@@ -47,6 +80,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
           {mode === 'login' ? 'Авторизация' : 'Регистрация'}
         </h2>
 
+        {formError && (
+          <div className="auth-form-error">
+            {formError}
+          </div>
+        )}
+
         <form onSubmit={handleSubmit} className="auth-form">
           {mode === 'register' && (
             <>
@@ -54,9 +93,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                 <label className="auth-form-label">Имя</label>
                 <input
                   type="text"
-                  name="firstName"
+                  name="first_name"
                   className="auth-form-input"
-                  value={formData.firstName}
+                  value={formData.first_name}
                   onChange={handleInputChange}
                   required
                 />
@@ -65,9 +104,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                 <label className="auth-form-label">Фамилия</label>
                 <input
                   type="text"
-                  name="lastName"
+                  name="last_name"
                   className="auth-form-input"
-                  value={formData.lastName}
+                  value={formData.last_name}
                   onChange={handleInputChange}
                   required
                 />
@@ -76,9 +115,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
           )}
 
           <div className="auth-form-group">
-            <label className="auth-form-label">Email или номер телефона</label>
+            <label className="auth-form-label">Email</label>
             <input
-              type="text"
+              type="email"
               name="email"
               className="auth-form-input"
               value={formData.email}
@@ -96,7 +135,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                 className="auth-form-input"
                 value={formData.phone}
                 onChange={handleInputChange}
-                required
               />
             </div>
           )}
@@ -118,23 +156,32 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
               <label className="auth-form-label">Дата рождения</label>
               <input
                 type="date"
-                name="birthDate"
+                name="birth_date"
                 className="auth-form-input"
-                value={formData.birthDate}
+                value={formData.birth_date}
                 onChange={handleInputChange}
-                required
               />
             </div>
           )}
 
-          <button type="submit" className="auth-form-submit">
-            {mode === 'login' ? 'Войти' : 'Зарегистрироваться'}
+          <button 
+            type="submit" 
+            className="auth-form-submit"
+            disabled={isSubmitting}
+          >
+            {isSubmitting
+              ? 'Загрузка...'
+              : mode === 'login' 
+                ? 'Войти' 
+                : 'Зарегистрироваться'
+            }
           </button>
 
           <button
             type="button"
             className="auth-form-toggle"
             onClick={() => setMode(mode === 'login' ? 'register' : 'login')}
+            disabled={isSubmitting}
           >
             {mode === 'login' ? 'Зарегистрироваться' : 'Уже есть аккаунт? Войти'}
           </button>

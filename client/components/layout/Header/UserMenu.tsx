@@ -1,9 +1,14 @@
 import React, { useState } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
+import { useRouter } from 'next/router';
 import { AuthModal } from '../../auth/AuthModal';
+import { useAuth } from '../../../context/AuthContext';
 
 export const UserMenu = () => {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const { user, isAuthenticated, logout } = useAuth();
+  const router = useRouter();
 
   const handleUserMenuClick = () => {
     const mobileMenu = document.querySelector('.user-menu-mobile');
@@ -32,13 +37,28 @@ export const UserMenu = () => {
     document.body.style.overflow = '';
   };
 
+  const handleProfileClick = () => {
+    closeUserMenu();
+    if (isAuthenticated) {
+      router.push('/profile');
+    } else {
+      handleAuthClick();
+    }
+  };
+
+  const handleLogoutClick = async () => {
+    await logout();
+    closeUserMenu();
+    router.push('/');
+  };
+
   return (
     <>
       <div className="user-menu">
         {/* Desktop version */}
         <button className="user-avatar d-none d-lg-block">
           <Image
-            src="/placeholder-avatar.png"
+            src={isAuthenticated ? "/avatar.png" : "/placeholder-avatar.png"}
             alt="User Avatar"
             width={32}
             height={32}
@@ -46,15 +66,23 @@ export const UserMenu = () => {
           />
         </button>
         <div className="user-menu-desktop">
-          <button className="menu-item">Профиль</button>
-          <button className="menu-item">Настройки</button>
-          <button className="menu-item" onClick={handleAuthClick}>Вход</button>
+          <button className="menu-item" onClick={handleProfileClick}>
+            {isAuthenticated ? 'Профиль' : 'Личный кабинет'}
+          </button>
+          {isAuthenticated && (
+            <button className="menu-item">Настройки</button>
+          )}
+          {isAuthenticated ? (
+            <button className="menu-item" onClick={handleLogoutClick}>Выход</button>
+          ) : (
+            <button className="menu-item" onClick={handleAuthClick}>Вход</button>
+          )}
         </div>
 
         {/* Mobile version */}
         <button className="user-avatar d-lg-none" onClick={handleUserMenuClick}>
           <Image
-            src="/placeholder-avatar.png"
+            src={isAuthenticated ? "/avatar.png" : "/placeholder-avatar.png"}
             alt="User Avatar"
             width={32}
             height={32}
@@ -63,7 +91,7 @@ export const UserMenu = () => {
         </button>
         <div className="user-menu-mobile">
           <div className="mobile-menu-header">
-            <h5>Профиль</h5>
+            <h5>{isAuthenticated ? `${user?.first_name || ''} ${user?.last_name || ''}` : 'Профиль'}</h5>
             <button className="close-button" onClick={closeUserMenu}>
               <svg className="icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -71,9 +99,17 @@ export const UserMenu = () => {
             </button>
           </div>
           <div className="mobile-menu-content">
-            <button className="menu-item" onClick={closeUserMenu}>Профиль</button>
-            <button className="menu-item" onClick={closeUserMenu}>Настройки</button>
-            <button className="menu-item" onClick={handleAuthClick}>Вход</button>
+            <button className="menu-item" onClick={handleProfileClick}>
+              {isAuthenticated ? 'Профиль' : 'Личный кабинет'}
+            </button>
+            {isAuthenticated && (
+              <button className="menu-item" onClick={closeUserMenu}>Настройки</button>
+            )}
+            {isAuthenticated ? (
+              <button className="menu-item" onClick={handleLogoutClick}>Выход</button>
+            ) : (
+              <button className="menu-item" onClick={handleAuthClick}>Вход</button>
+            )}
           </div>
         </div>
       </div>

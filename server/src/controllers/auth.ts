@@ -26,8 +26,8 @@ export class AuthController {
         user: {
           id: user.id,
           email: user.email,
-          first_name: user.first_name,
-          last_name: user.last_name,
+          first_name: user.first_name || '',
+          last_name: user.last_name || '',
         },
         token,
         session: {
@@ -45,11 +45,15 @@ export class AuthController {
     try {
       const { email, password } = req.body;
 
+      console.log(`Login attempt for email: ${email}`);
       const user = await this.authRepository.validateCredentials({ email, password });
+      
       if (!user) {
+        console.log(`Invalid credentials for email: ${email}`);
         return res.status(401).json({ error: 'Invalid email or password' });
       }
 
+      console.log(`User authenticated successfully: ${user.id}`);
       const session = await this.authRepository.createSession(user.id);
       const token = generateJWT(user.id);
 
@@ -57,8 +61,8 @@ export class AuthController {
         user: {
           id: user.id,
           email: user.email,
-          first_name: user.first_name,
-          last_name: user.last_name,
+          first_name: user.first_name || '',
+          last_name: user.last_name || '',
         },
         token,
         session: {

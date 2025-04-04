@@ -3,21 +3,23 @@ import { v4 as uuidv4 } from 'uuid';
 import { hash, compare } from 'bcryptjs';
 
 export interface User {
-  id: string;
+  id: number;
   email: string;
-  password: string;
-  first_name: string;
-  last_name: string;
-  created_at: Date;
-  updated_at: Date;
+  password_hash: string;
+  first_name: string | null;
+  last_name: string | null;
+  phone: string | null;
+  birth_date: Date | null;
+  created_at: Date | null;
+  updated_at: Date | null;
 }
 
 export interface Session {
-  id: string;
-  user_id: string;
+  id: number;
+  user_id: number;
   token: string;
   expires_at: Date;
-  created_at: Date;
+  created_at: Date | null;
 }
 
 export class AuthRepository {
@@ -31,13 +33,13 @@ export class AuthRepository {
     return result.rows[0] || null;
   }
 
-  async createUser(userData: Omit<User, 'id' | 'created_at' | 'updated_at'>): Promise<User> {
+  async createUser(userData: Omit<User, 'id' | 'created_at' | 'updated_at' | 'password_hash'> & { password: string }): Promise<User> {
     const hashedPassword = await hash(userData.password, 10);
     const result = await this.pool.query(
-      `INSERT INTO users (id, email, password, first_name, last_name, created_at, updated_at)
-       VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
+      `INSERT INTO users (email, password_hash, first_name, last_name, phone, birth_date, created_at, updated_at)
+       VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())
        RETURNING *`,
-      [uuidv4(), userData.email, hashedPassword, userData.first_name, userData.last_name]
+      [userData.email, hashedPassword, userData.first_name, userData.last_name, userData.phone, userData.birth_date]
     );
     return result.rows[0];
   }
@@ -46,20 +48,20 @@ export class AuthRepository {
     const user = await this.getUserByEmail(credentials.email);
     if (!user) return null;
 
-    const isValid = await compare(credentials.password, user.password);
+    const isValid = await compare(credentials.password, user.password_hash);
     return isValid ? user : null;
   }
 
-  async createSession(userId: string): Promise<Session> {
+  async createSession(userId: number): Promise<Session> {
     const token = uuidv4();
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 7); // Session expires in 7 days
 
     const result = await this.pool.query(
-      `INSERT INTO sessions (id, user_id, token, expires_at, created_at)
-       VALUES ($1, $2, $3, $4, NOW())
+      `INSERT INTO sessions (user_id, token, expires_at, created_at)
+       VALUES ($1, $2, $3, NOW())
        RETURNING *`,
-      [uuidv4(), userId, token, expiresAt]
+      [userId, token, expiresAt]
     );
     return result.rows[0];
   }

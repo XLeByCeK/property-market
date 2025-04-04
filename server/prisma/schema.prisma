@@ -1,26 +1,36 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
-    provider = "prisma-client-js"
+  provider = "prisma-client-js"
 }
 
 datasource db {
-    provider = "postgresql"
-    url = env("DATABASE_URL")
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model users {
-    id            Int      @id @default(autoincrement())
-    name         String  
-    surname         String  
-    email         String 
-    password      String
-    date_of_birth DateTime
-    phone_number  String?
+  id            Int        @id @default(autoincrement())
+  email         String     @unique @db.VarChar(255)
+  phone         String?    @unique @db.VarChar(20)
+  password_hash String     @db.VarChar(255)
+  first_name    String?    @db.VarChar(100)
+  last_name     String?    @db.VarChar(100)
+  birth_date    DateTime?  @db.Date
+  created_at    DateTime?  @default(now()) @db.Timestamptz(6)
+  updated_at    DateTime?  @default(now()) @db.Timestamptz(6)
+  sessions      sessions[]
 
+  @@index([email], map: "idx_users_email")
+  @@index([phone], map: "idx_users_phone")
 }
 
+model sessions {
+  id         Int       @id @default(autoincrement())
+  user_id    Int?
+  token      String    @unique @db.VarChar(255)
+  expires_at DateTime  @db.Timestamptz(6)
+  created_at DateTime? @default(now()) @db.Timestamptz(6)
+  users      users?    @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([token], map: "idx_sessions_token")
+  @@index([user_id], map: "idx_sessions_user_id")
+}
