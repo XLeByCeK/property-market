@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { Navbar } from './Navbar';
 import { CitySelector } from './CitySelector';
 import { UserMenu } from './UserMenu';
@@ -43,7 +44,7 @@ export const Header = () => {
             </div>
 
             {/* Logo */}
-            <div className="logo-container">
+            <Link href="/" className="logo-container">
               <div className="logo">
                 <Image
                   src="/placeholder-logo.png"
@@ -53,12 +54,12 @@ export const Header = () => {
                   className="object-cover"
                 />
               </div>
-            </div>
+            </Link>
 
             {/* Company Name */}
-            <div>
+            <Link href="/">
               <span className="company-name">Property Market</span>
-            </div>
+            </Link>
           </div>
 
           {/* Center section */}

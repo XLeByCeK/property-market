@@ -39,73 +39,74 @@ const ProfilePage: NextPage = () => {
 
       <Header />
 
-      <main className="container mt-4 mb-5">
+      <main className="container mt-5 mb-5 profile-page">
         <div className="row">
           <div className="col-12">
-            <h1 className="mb-4">Личный кабинет</h1>
+            <h1 className="mb-4 p-3 bg-light rounded shadow-sm">Личный кабинет</h1>
           </div>
         </div>
 
         <div className="row">
           <div className="col-lg-3 mb-4">
-            <div className="card">
-              <div className="card-body">
-                <h5 className="card-title">Навигация</h5>
-                <div className="list-group">
-                  <button className="list-group-item list-group-item-action active">
+            <div className="card h-100 shadow-sm">
+              <div className="card-body d-flex flex-column">
+                <h5 className="card-title mb-4 border-bottom pb-2">Навигация</h5>
+                <div className="list-group flex-grow-1 nav-pills">
+                  <button className="list-group-item list-group-item-action active py-3 mb-2">
                     Личные данные
                   </button>
-                  <button className="list-group-item list-group-item-action">
+                  <button className="list-group-item list-group-item-action py-3 mb-2">
                     Избранное
                   </button>
-                  <button className="list-group-item list-group-item-action">
+                  <button className="list-group-item list-group-item-action py-3 mb-2">
                     История просмотров
                   </button>
-                  <button className="list-group-item list-group-item-action">
+                  <button className="list-group-item list-group-item-action py-3">
                     Мои объявления
                   </button>
+                  <div className="flex-grow-1"></div>
                 </div>
               </div>
             </div>
           </div>
 
           <div className="col-lg-9">
-            <div className="card">
+            <div className="card h-100 shadow-sm">
               <div className="card-body">
-                <h2 className="card-title mb-4">Личные данные</h2>
+                <h2 className="card-title mb-4 border-bottom pb-2">Личные данные</h2>
                 
-                <div className="row mb-3">
+                <div className="row mb-4 p-2 bg-light rounded">
                   <div className="col-sm-3">
-                    <p className="text-muted mb-0">Имя:</p>
+                    <p className="text-muted mb-0 fw-bold">Имя:</p>
                   </div>
                   <div className="col-sm-9">
                     <p className="mb-0">{user.first_name || 'Не указано'}</p>
                   </div>
                 </div>
                 
-                <div className="row mb-3">
+                <div className="row mb-4 p-2 bg-light rounded">
                   <div className="col-sm-3">
-                    <p className="text-muted mb-0">Фамилия:</p>
+                    <p className="text-muted mb-0 fw-bold">Фамилия:</p>
                   </div>
                   <div className="col-sm-9">
                     <p className="mb-0">{user.last_name || 'Не указано'}</p>
                   </div>
                 </div>
                 
-                <div className="row mb-3">
+                <div className="row mb-4 p-2 bg-light rounded">
                   <div className="col-sm-3">
-                    <p className="text-muted mb-0">Email:</p>
+                    <p className="text-muted mb-0 fw-bold">Email:</p>
                   </div>
                   <div className="col-sm-9">
                     <p className="mb-0">{user.email}</p>
                   </div>
                 </div>
                 
-                <div className="mt-4">
-                  <button className="btn btn-primary me-2">
+                <div className="mt-5">
+                  <button className="btn btn-primary me-2 px-4 py-2">
                     Редактировать профиль
                   </button>
-                  <button className="btn btn-outline-secondary">
+                  <button className="btn btn-outline-secondary px-4 py-2">
                     Изменить пароль
                   </button>
                 </div>

@@ -1049,4 +1049,38 @@ body {
   .auth-form-submit {
     padding: 10px;
   }
+}
+
+/* Стили для страницы профиля */
+.profile-page .card {
+  min-height: 500px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border: none;
+  transition: all 0.3s ease;
+}
+
+.profile-page .card:hover {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+.profile-page .list-group-item {
+  border-radius: 0.5rem;
+  margin-bottom: 0.5rem;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  transition: all 0.2s ease;
+}
+
+.profile-page .list-group-item:hover:not(.active) {
+  background-color: #f8f9fa;
+  transform: translateX(5px);
+}
+
+.profile-page .list-group-item.active {
+  background-color: #0d6efd;
+  border-color: #0d6efd;
+}
+
+.profile-page .bg-light {
+  background-color: #f8f9fa !important;
+  border-radius: 0.5rem;
 } 
