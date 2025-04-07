@@ -42,7 +42,7 @@ const ProfilePage: NextPage = () => {
       <main className="container mt-5 mb-5 profile-page">
         <div className="row">
           <div className="col-12">
-            <h1 className="mb-4 p-3 bg-light rounded shadow-sm">Личный кабинет</h1>
+            <h1 className="mb-4 p-3 bg-light rounded shadow-sm mt-5">Личный кабинет</h1>
           </div>
         </div>
 
