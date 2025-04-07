@@ -218,13 +218,38 @@ body {
   justify-content: space-between;
   align-items: center;
   padding: 1rem;
-  border-bottom: 1px solid rgb(229 231 235);
+  border-bottom: 1px solid #e9ecef;
+  background-color: #f8f9fa;
 }
 
 .mobile-menu-header h5 {
   margin: 0;
-  font-size: 1.25rem;
+  font-size: 1.1rem;
   font-weight: 600;
+}
+
+.mobile-menu-content {
+  flex: 1;
+  padding: 1rem;
+  overflow-y: auto;
+}
+
+.mobile-menu-content .menu-item {
+  display: block;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: none;
+  background: none;
+  text-align: left;
+  color: #333;
+  font-size: 1rem;
+  border-radius: 0.5rem;
+  margin-bottom: 0.5rem;
+  transition: all 0.2s ease;
+}
+
+.mobile-menu-content .menu-item:hover {
+  background-color: #f8f9fa;
 }
 
 .close-button {
@@ -232,15 +257,11 @@ body {
   border: none;
   padding: 0.5rem;
   cursor: pointer;
-  color: rgb(107 114 128);
+  color: #666;
 }
 
 .close-button:hover {
-  color: rgb(17 24 39);
-}
-
-.mobile-menu-content {
-  padding: 1rem;
+  color: #333;
 }
 
 /* User menu */
@@ -316,10 +337,11 @@ body {
   bottom: 0;
   width: 100%;
   background-color: white;
-  box-shadow: -2px 0 5px rgba(0, 0, 0, 0.1);
   z-index: 1000;
   transform: translateX(100%);
   transition: transform 0.3s ease-in-out;
+  display: flex;
+  flex-direction: column;
 }
 
 .user-menu-mobile.visible {

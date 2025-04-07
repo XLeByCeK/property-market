@@ -103,7 +103,7 @@ const ProfilePage: NextPage = () => {
                 </div>
                 
                 <div className="mt-5">
-                  <button className="btn btn-primary me-2 px-4 py-2">
+                  <button className="btn btn-primary me-2 px-4 py-2 mb-2 mb-md-0">
                     Редактировать профиль
                   </button>
                   <button className="btn btn-outline-secondary px-4 py-2">

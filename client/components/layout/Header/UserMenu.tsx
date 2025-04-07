@@ -91,7 +91,18 @@ export const UserMenu = () => {
         </button>
         <div className="user-menu-mobile">
           <div className="mobile-menu-header">
-            <h5>{isAuthenticated ? `${user?.first_name || ''} ${user?.last_name || ''}` : 'Профиль'}</h5>
+            <div className="d-flex align-items-center">
+              <div className="me-3">
+                <Image
+                  src={isAuthenticated ? "/placeholder-avatar.png" : "/placeholder-avatar.png"}
+                  alt="User Avatar"
+                  width={40}
+                  height={40}
+                  className="object-cover rounded-circle"
+                />
+              </div>
+              <h5 className="mb-0">{isAuthenticated ? `${user?.first_name || ''} ${user?.last_name || ''}` : 'Профиль'}</h5>
+            </div>
             <button className="close-button" onClick={closeUserMenu}>
               <svg className="icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
