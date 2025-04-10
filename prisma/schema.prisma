@@ -8,7 +8,7 @@ datasource db {
 }
 
 model users {
-    id            String    @id @default(uuid())
+    id            Int       @id @default(autoincrement())
     email         String    @unique
     password      String
     first_name    String
@@ -28,7 +28,7 @@ model users {
 }
 
 model property {
-    id              String    @id @default(uuid())
+    id              Int       @id @default(autoincrement())
     title           String
     description     String
     price           Float
@@ -46,12 +46,12 @@ model property {
     updated_at      DateTime  @updatedAt
 
     // Внешние ключи
-    property_type_id String
-    transaction_type_id String
-    user_id         String
-    city_id         String
-    district_id     String?
-    metro_id        String?
+    property_type_id Int
+    transaction_type_id Int
+    user_id         Int
+    city_id         Int
+    district_id     Int?
+    metro_id        Int?
     metro_distance  Float?
 
     // Связи
@@ -69,7 +69,7 @@ model property {
 }
 
 model property_type {
-    id          String    @id @default(uuid())
+    id          Int       @id @default(autoincrement())
     name        String    @unique
     description String?
 
@@ -78,7 +78,7 @@ model property_type {
 }
 
 model transaction_type {
-    id          String    @id @default(uuid())
+    id          Int       @id @default(autoincrement())
     name        String    @unique
 
     // Связи
@@ -86,21 +86,21 @@ model transaction_type {
 }
 
 model property_image {
-    id          String    @id @default(uuid())
+    id          Int       @id @default(autoincrement())
     image_url   String
     is_main     Boolean   @default(false)
     order       Int       @default(0)
     created_at  DateTime  @default(now())
 
     // Внешние ключи
-    property_id String
+    property_id Int
 
     // Связи
     property    property  @relation(fields: [property_id], references: [id], onDelete: Cascade)
 }
 
 model feature {
-    id          String    @id @default(uuid())
+    id          Int       @id @default(autoincrement())
     name        String    @unique
     category    String?
 
@@ -109,12 +109,12 @@ model feature {
 }
 
 model property_feature {
-    id          String    @id @default(uuid())
+    id          Int       @id @default(autoincrement())
     value       String?
 
     // Внешние ключи
-    property_id String
-    feature_id  String
+    property_id Int
+    feature_id  Int
 
     // Связи
     property    property  @relation(fields: [property_id], references: [id], onDelete: Cascade)
@@ -125,7 +125,7 @@ model property_feature {
 }
 
 model city {
-    id          String    @id @default(uuid())
+    id          Int       @id @default(autoincrement())
     name        String
     region      String?
     country     String?
@@ -140,11 +140,11 @@ model city {
 }
 
 model district {
-    id          String    @id @default(uuid())
+    id          Int       @id @default(autoincrement())
     name        String
     
     // Внешние ключи
-    city_id     String
+    city_id     Int
 
     // Связи
     city        city      @relation(fields: [city_id], references: [id])
@@ -155,13 +155,13 @@ model district {
 }
 
 model metro_station {
-    id          String    @id @default(uuid())
+    id          Int       @id @default(autoincrement())
     name        String
     line        String?
     color       String?
     
     // Внешние ключи
-    city_id     String
+    city_id     Int
 
     // Связи
     city        city      @relation(fields: [city_id], references: [id])
@@ -172,12 +172,12 @@ model metro_station {
 }
 
 model favorite {
-    id          String    @id @default(uuid())
+    id          Int       @id @default(autoincrement())
     created_at  DateTime  @default(now())
 
     // Внешние ключи
-    user_id     String
-    property_id String
+    user_id     Int
+    property_id Int
 
     // Связи
     user        users     @relation(fields: [user_id], references: [id], onDelete: Cascade)
@@ -188,12 +188,12 @@ model favorite {
 }
 
 model view_history {
-    id          String    @id @default(uuid())
+    id          Int       @id @default(autoincrement())
     viewed_at   DateTime  @default(now())
 
     // Внешние ключи
-    user_id     String
-    property_id String
+    user_id     Int
+    property_id Int
 
     // Связи
     user        users     @relation(fields: [user_id], references: [id], onDelete: Cascade)
@@ -204,15 +204,15 @@ model view_history {
 }
 
 model user_message {
-    id          String    @id @default(uuid())
+    id          Int       @id @default(autoincrement())
     message     String
     is_read     Boolean   @default(false)
     created_at  DateTime  @default(now())
 
     // Внешние ключи
-    sender_id   String
-    recipient_id String
-    property_id String?
+    sender_id   Int
+    recipient_id Int
+    property_id Int?
 
     // Связи
     sender      users     @relation("sender", fields: [sender_id], references: [id], onDelete: Cascade)
@@ -225,14 +225,14 @@ model user_message {
 }
 
 model user_subscription {
-    id           String    @id @default(uuid())
+    id           Int       @id @default(autoincrement())
     name         String
     search_params Json
     created_at   DateTime  @default(now())
     updated_at   DateTime  @updatedAt
 
     // Внешние ключи
-    user_id      String
+    user_id      Int
 
     // Связи
     user         users     @relation(fields: [user_id], references: [id], onDelete: Cascade)
