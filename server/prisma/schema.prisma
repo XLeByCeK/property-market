@@ -15,6 +15,7 @@ model users {
     last_name     String
     phone         String?
     birth_date    DateTime?
+    role          String    @default("BUYER")
     created_at    DateTime  @default(now())
     updated_at    DateTime  @updatedAt
 

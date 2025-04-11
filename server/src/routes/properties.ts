@@ -9,25 +9,37 @@ type CreatePropertyRequest = {
   title: string;
   description: string;
   price: number;
+  area: number;
+  rooms: number;
+  floor?: number;
+  total_floors?: number;
   address: string;
-  city: string;
-  type: 'APARTMENT' | 'HOUSE' | 'LAND' | 'COMMERCIAL';
+  year_built?: number;
+  property_type_id: number;
+  transaction_type_id: number;
+  city_id: number;
+  district_id?: number;
+  metro_id?: number;
+  metro_distance?: number;
+  is_new_building?: boolean;
+  is_commercial?: boolean;
+  is_country?: boolean;
   images: string[];
 };
 
 type UpdatePropertyRequest = Partial<CreatePropertyRequest> & {
-  status?: 'ACTIVE' | 'SOLD' | 'INACTIVE';
+  status?: 'active' | 'sold' | 'inactive';
 };
 
 // Get all properties
 router.get('/', async (req, res) => {
   try {
-    const properties = await prisma.properties.findMany({
+    const properties = await prisma.property.findMany({
       where: {
-        status: 'ACTIVE',
+        status: 'active',
       },
       include: {
-        owner: {
+        user: {
           select: {
             id: true,
             first_name: true,
@@ -35,6 +47,12 @@ router.get('/', async (req, res) => {
             phone: true,
           },
         },
+        property_type: true,
+        transaction_type: true,
+        city: true,
+        district: true,
+        metro_station: true,
+        images: true,
       },
     });
     res.json(properties);
@@ -52,12 +70,12 @@ router.get('/:id', async (req, res) => {
       return res.status(400).json({ error: 'Invalid property ID' });
     }
 
-    const property = await prisma.properties.findUnique({
+    const property = await prisma.property.findUnique({
       where: {
         id: propertyId,
       },
       include: {
-        owner: {
+        user: {
           select: {
             id: true,
             first_name: true,
@@ -65,6 +83,12 @@ router.get('/:id', async (req, res) => {
             phone: true,
           },
         },
+        property_type: true,
+        transaction_type: true,
+        city: true,
+        district: true,
+        metro_station: true,
+        images: true,
       },
     });
 
@@ -82,34 +106,68 @@ router.get('/:id', async (req, res) => {
 // Create new property
 router.post('/', authenticateToken, async (req: express.Request<{}, {}, CreatePropertyRequest>, res) => {
   try {
-    const { title, description, price, address, city, type, images } = req.body;
+    const { 
+      title, 
+      description, 
+      price, 
+      area, 
+      rooms, 
+      floor, 
+      total_floors, 
+      address, 
+      year_built,
+      property_type_id,
+      transaction_type_id,
+      city_id,
+      district_id,
+      metro_id,
+      metro_distance,
+      is_new_building,
+      is_commercial,
+      is_country,
+      images 
+    } = req.body;
 
     // Validate input
-    if (!title || !description || !price || !address || !city || !type || !images) {
+    if (!title || !description || !price || !area || !rooms || !address || !property_type_id || !transaction_type_id || !city_id) {
       return res.status(400).json({ error: 'Missing required fields' });
-    }
-
-    if (!['APARTMENT', 'HOUSE', 'LAND', 'COMMERCIAL'].includes(type)) {
-      return res.status(400).json({ error: 'Invalid property type' });
     }
 
     if (!req.user) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
-    const property = await prisma.properties.create({
+    const property = await prisma.property.create({
       data: {
         title,
         description,
         price,
+        area,
+        rooms,
+        floor,
+        total_floors,
         address,
-        city,
-        type,
-        images,
-        owner_id: req.user.id,
+        year_built,
+        property_type_id,
+        transaction_type_id,
+        city_id,
+        district_id,
+        metro_id,
+        metro_distance,
+        is_new_building: is_new_building || false,
+        is_commercial: is_commercial || false,
+        is_country: is_country || false,
+        user_id: req.user.id,
+        images: {
+          create: images.map((url, index) => ({
+            image_url: url,
+            is_main: index === 0,
+            order: index,
+          })),
+        },
       },
       include: {
-        owner: {
+        user: {
           select: {
             id: true,
             first_name: true,
@@ -117,6 +175,12 @@ router.post('/', authenticateToken, async (req: express.Request<{}, {}, CreatePr
             phone: true,
           },
         },
+        property_type: true,
+        transaction_type: true,
+        city: true,
+        district: true,
+        metro_station: true,
+        images: true,
       },
     });
 
@@ -140,7 +204,7 @@ router.put('/:id', authenticateToken, async (req: express.Request<{ id: string }
     }
 
     // Check if property exists and belongs to the user
-    const existingProperty = await prisma.properties.findUnique({
+    const existingProperty = await prisma.property.findUnique({
       where: { id: propertyId },
     });
 
@@ -148,15 +212,29 @@ router.put('/:id', authenticateToken, async (req: express.Request<{ id: string }
       return res.status(404).json({ error: 'Property not found' });
     }
 
-    if (existingProperty.owner_id !== req.user.id && req.user.role !== 'ADMIN') {
+    if (existingProperty.user_id !== req.user.id && req.user.role !== 'ADMIN') {
       return res.status(403).json({ error: 'Forbidden' });
     }
 
-    const property = await prisma.properties.update({
+    const { images, ...updateData } = req.body;
+
+    const property = await prisma.property.update({
       where: { id: propertyId },
-      data: req.body,
+      data: {
+        ...updateData,
+        ...(images && {
+          images: {
+            deleteMany: {},
+            create: images.map((url, index) => ({
+              image_url: url,
+              is_main: index === 0,
+              order: index,
+            })),
+          },
+        }),
+      },
       include: {
-        owner: {
+        user: {
           select: {
             id: true,
             first_name: true,
@@ -164,6 +242,12 @@ router.put('/:id', authenticateToken, async (req: express.Request<{ id: string }
             phone: true,
           },
         },
+        property_type: true,
+        transaction_type: true,
+        city: true,
+        district: true,
+        metro_station: true,
+        images: true,
       },
     });
 
@@ -187,7 +271,7 @@ router.delete('/:id', authenticateToken, async (req, res) => {
     }
 
     // Check if property exists and belongs to the user
-    const existingProperty = await prisma.properties.findUnique({
+    const existingProperty = await prisma.property.findUnique({
       where: { id: propertyId },
     });
 
@@ -195,11 +279,11 @@ router.delete('/:id', authenticateToken, async (req, res) => {
       return res.status(404).json({ error: 'Property not found' });
     }
 
-    if (existingProperty.owner_id !== req.user.id && req.user.role !== 'ADMIN') {
+    if (existingProperty.user_id !== req.user.id && req.user.role !== 'ADMIN') {
       return res.status(403).json({ error: 'Forbidden' });
     }
 
-    await prisma.properties.delete({
+    await prisma.property.delete({
       where: { id: propertyId },
     });
 
