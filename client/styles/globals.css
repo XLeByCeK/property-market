@@ -650,6 +650,12 @@ body {
 }
 
 /* Property Cards */
+.property-card-link {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+}
+
 .property-card {
   background-color: white;
   border-radius: 0.5rem;
@@ -1168,4 +1174,307 @@ body {
 
 .message-input {
   background-color: #f8f9fa;
+}
+
+/* Property Details Page */
+.property-details-page {
+  padding-top: 5rem;
+}
+
+.property-details-container {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+@media (max-width: 992px) {
+  .property-details-container {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Property Info Component */
+.property-title {
+  font-size: 1.75rem;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+  color: rgb(17 24 39);
+}
+
+.property-address-info {
+  font-size: 1rem;
+  color: rgb(75 85 99);
+  margin-bottom: 0.5rem;
+}
+
+.property-metro-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: rgb(75 85 99);
+  margin-bottom: 1.5rem;
+}
+
+.metro-distance {
+  color: rgb(107 114 128);
+}
+
+.property-details-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.property-detail-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.detail-label {
+  font-size: 0.875rem;
+  color: rgb(107 114 128);
+}
+
+.detail-value {
+  font-size: 1rem;
+  font-weight: 500;
+  color: rgb(31 41 55);
+}
+
+.section-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  color: rgb(17 24 39);
+}
+
+.property-description {
+  margin-bottom: 2rem;
+}
+
+.property-description p {
+  font-size: 1rem;
+  line-height: 1.6;
+  color: rgb(55 65 81);
+}
+
+.property-description-text {
+  margin-bottom: 2rem;
+}
+
+.property-description-text p {
+  font-size: 1rem;
+  line-height: 1.6;
+  color: rgb(55 65 81);
+}
+
+.property-building-info {
+  font-size: 1rem;
+  line-height: 1.6;
+  color: rgb(55 65 81);
+  margin-top: 1rem;
+}
+
+/* Property Image Carousel */
+.property-carousel {
+  margin-bottom: 2rem;
+}
+
+.carousel-main {
+  position: relative;
+  height: 400px;
+  background-color: rgb(243 244 246);
+  border-radius: 0.5rem;
+  overflow: hidden;
+  margin-bottom: 1rem;
+}
+
+.carousel-image-container {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+.carousel-image {
+  object-fit: contain;
+}
+
+.carousel-control {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background-color: rgba(255, 255, 255, 0.8);
+  border: none;
+  border-radius: 9999px;
+  width: 2.5rem;
+  height: 2.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 10;
+  transition: background-color 0.2s;
+}
+
+.carousel-control:hover {
+  background-color: rgba(255, 255, 255, 0.9);
+}
+
+.carousel-control.prev {
+  left: 1rem;
+}
+
+.carousel-control.next {
+  right: 1rem;
+}
+
+.carousel-control svg {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+.carousel-thumbnails {
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  padding-bottom: 0.5rem;
+}
+
+.carousel-thumbnail {
+  flex: 0 0 auto;
+  width: 100px;
+  height: 60px;
+  border-radius: 0.25rem;
+  overflow: hidden;
+  cursor: pointer;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+}
+
+.carousel-thumbnail:hover {
+  opacity: 0.9;
+}
+
+.carousel-thumbnail.active {
+  opacity: 1;
+  box-shadow: 0 0 0 2px rgb(37 99 235);
+}
+
+.thumbnail-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Yandex Map */
+.property-map {
+  margin-bottom: 2rem;
+}
+
+.yandex-map {
+  width: 100%;
+  height: 400px;
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+
+.yandex-map-error,
+.yandex-map-loading {
+  width: 100%;
+  height: 400px;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background-color: #f8f9fa;
+  color: #6c757d;
+  text-align: center;
+  padding: 2rem;
+}
+
+.yandex-map-error {
+  border: 1px dashed #dc3545;
+  color: #dc3545;
+}
+
+/* Property Contact Card */
+.property-contact-card {
+  position: sticky;
+  top: 5rem;
+  background-color: white;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  padding: 1.5rem;
+}
+
+.contact-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.contact-card-price {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: rgb(17 24 39);
+}
+
+.contact-card-seller {
+  margin-bottom: 1.5rem;
+}
+
+.seller-name {
+  font-size: 1rem;
+  font-weight: 500;
+  color: rgb(55 65 81);
+}
+
+.contact-card-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.contact-card-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  border-radius: 0.375rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  width: 100%;
+}
+
+.phone-button {
+  background-color: rgb(37 99 235);
+  color: white;
+  border: none;
+}
+
+.phone-button:hover {
+  background-color: rgb(29 78 216);
+}
+
+.message-button {
+  background-color: white;
+  color: rgb(55 65 81);
+  border: 1px solid rgb(229 231 235);
+}
+
+.message-button:hover {
+  background-color: rgb(249 250 251);
+}
+
+.button-icon {
+  width: 1.25rem;
+  height: 1.25rem;
 } 

@@ -2,7 +2,12 @@
 const nextConfig = {
   reactStrictMode: true,
   images: {
-    domains: [], // Add any external domains here if needed
+    domains: [
+      'localhost',
+      'property-market-api.com', 
+      'images.unsplash.com',
+      'img.icons8.com'
+    ],
   },
 };
 
