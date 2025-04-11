@@ -115,7 +115,12 @@ const MessageView: React.FC<MessageViewProps> = ({ conversation, onConversationU
       </div>
       
       {/* Messages area */}
-      <div className="messages-container p-3 flex-grow-1" style={{ overflowY: 'auto', height: '400px' }}>
+      <div className="messages-container p-3 flex-grow-1" style={{ 
+        overflowY: 'auto', 
+        height: '400px',
+        display: 'flex',
+        flexDirection: 'column'
+      }}>
         {error && <div className="alert alert-danger">{error}</div>}
         
         {messages.length === 0 ? (
@@ -130,15 +135,26 @@ const MessageView: React.FC<MessageViewProps> = ({ conversation, onConversationU
               <div 
                 key={message.id} 
                 className={`message mb-3 ${isFromCurrentUser ? 'text-end' : ''}`}
+                style={{ maxWidth: '100%' }}
               >
                 <div 
                   className={`message-bubble p-3 rounded ${
                     isFromCurrentUser ? 'bg-primary text-white ms-auto' : 'bg-light'
                   }`}
-                  style={{ maxWidth: '75%', display: 'inline-block', wordBreak: 'break-word' }}
+                  style={{ 
+                    maxWidth: '75%', 
+                    display: 'inline-block', 
+                    wordBreak: 'break-word',
+                    whiteSpace: 'pre-wrap',
+                    overflowWrap: 'break-word',
+                    wordWrap: 'break-word',
+                    overflow: 'hidden'
+                  }}
                 >
-                  {message.message}
-                  <div className="text-end">
+                  <div style={{ overflow: 'hidden' }}>
+                    {message.message}
+                  </div>
+                  <div className="text-end mt-2">
                     <small className={`${isFromCurrentUser ? 'text-white-50' : 'text-muted'}`}>
                       {new Date(message.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                     </small>
