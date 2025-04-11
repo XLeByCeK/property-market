@@ -6,7 +6,8 @@ const nextConfig = {
       'localhost',
       'property-market-api.com', 
       'images.unsplash.com',
-      'img.icons8.com'
+      'img.icons8.com',
+      'api-maps.yandex.ru'
     ],
   },
 };

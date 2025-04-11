@@ -38,9 +38,9 @@ const PropertyPage = () => {
             lat: 55.753215 + (Math.random() * 0.1 - 0.05),
             lng: 37.622504 + (Math.random() * 0.1 - 0.05)
           });
-        } catch (apiError) {
-          // If in development, immediately load mock data
-          if (process.env.NODE_ENV === 'development') {
+        } catch (apiError: any) {
+          // If in development or explicitly skipping API, immediately load mock data
+          if (process.env.NODE_ENV === 'development' || (apiError && apiError.isDevModeSkip)) {
             loadMockData(propertyId);
           } else {
             // In production, show the error
@@ -227,11 +227,13 @@ const PropertyPage = () => {
               </div>
             )}
             
-            <YandexMap 
-              latitude={coordinates.lat} 
-              longitude={coordinates.lng} 
-              address={property.address} 
-            />
+            {coordinates && (
+              <YandexMap 
+                latitude={coordinates.lat} 
+                longitude={coordinates.lng} 
+                address={property.address} 
+              />
+            )}
           </div>
           
           <div className="property-details-sidebar">

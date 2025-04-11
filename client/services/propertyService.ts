@@ -70,8 +70,11 @@ export const getPropertyById = async (id: string | number): Promise<PropertyDeta
     // Skip real API call in development mode
     if (process.env.NODE_ENV === 'development') {
       console.log('Development mode: Skipping real API call');
-      // Let the mock data in the component handle it
-      throw new Error('Intentionally skipping API call in development');
+      // Return a rejected promise instead of throwing an error directly
+      return Promise.reject({
+        isDevModeSkip: true,
+        message: 'Skipping API call in development'
+      });
     }
     
     const response = await axios.get(`${API_URL}/properties/${id}`);
