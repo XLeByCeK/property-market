@@ -135,6 +135,35 @@ export const api = {
         url: `/properties/${id}`,
       }),
   },
+  
+  // Chat/Messages
+  chat: {
+    getConversations: () => 
+      apiRequest({
+        method: 'GET',
+        url: '/chat/conversations',
+      }),
+      
+    getPropertyMessages: (propertyId: number) => 
+      apiRequest({
+        method: 'GET',
+        url: `/chat/properties/${propertyId}/messages`,
+      }),
+      
+    sendMessage: (data: { content: string; recipient_id: number; property_id?: number }) => 
+      apiRequest({
+        method: 'POST',
+        url: '/chat/messages',
+        data,
+      }),
+      
+    markAsRead: (messageIds: number[]) => 
+      apiRequest({
+        method: 'POST',
+        url: '/chat/messages/read',
+        data: { messageIds },
+      }),
+  },
 };
 
 export default api; 

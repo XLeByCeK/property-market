@@ -13,6 +13,35 @@ const ConversationsList: React.FC<ConversationsListProps> = ({
   selectedConversation,
   onSelectConversation,
 }) => {
+  // Format date safely
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return '';
+    
+    try {
+      return new Date(dateString).toLocaleDateString();
+    } catch (error) {
+      console.error('Invalid date:', dateString);
+      return '';
+    }
+  };
+
+  // Get first name safely
+  const getFirstName = (user: any) => {
+    return user.firstName || user.first_name || '';
+  };
+
+  // Get last name safely
+  const getLastName = (user: any) => {
+    return user.lastName || user.last_name || '';
+  };
+
+  // Get user initials
+  const getUserInitials = (user: any) => {
+    const firstName = getFirstName(user);
+    const lastName = getLastName(user);
+    return (firstName.charAt(0) + lastName.charAt(0)).toUpperCase();
+  };
+
   return (
     <div className="conversation-list">
       {conversations.map((conversation) => (
@@ -29,16 +58,16 @@ const ConversationsList: React.FC<ConversationsListProps> = ({
           <div className="d-flex align-items-center">
             <div className="avatar-container me-3">
               <div className="avatar rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center" style={{ width: '40px', height: '40px' }}>
-                {conversation.user.first_name.charAt(0) + conversation.user.last_name.charAt(0)}
+                {getUserInitials(conversation.user)}
               </div>
             </div>
             <div className="conversation-info flex-grow-1">
               <div className="d-flex justify-content-between">
                 <h6 className="mb-0">
-                  {conversation.user.first_name} {conversation.user.last_name}
+                  {getFirstName(conversation.user)} {getLastName(conversation.user)}
                 </h6>
                 <small className="text-muted">
-                  {new Date(conversation.lastMessage.created_at).toLocaleDateString()}
+                  {conversation.lastMessage ? formatDate(conversation.lastMessage.created_at) : ''}
                 </small>
               </div>
               {conversation.property && (
@@ -47,7 +76,7 @@ const ConversationsList: React.FC<ConversationsListProps> = ({
                 </small>
               )}
               <p className="mb-0 text-truncate" style={{ maxWidth: '200px' }}>
-                {conversation.lastMessage.message}
+                {conversation.lastMessage ? conversation.lastMessage.message : 'Нет сообщений'}
               </p>
               {conversation.unreadCount > 0 && (
                 <span className="badge bg-primary rounded-pill">

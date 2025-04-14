@@ -7,18 +7,57 @@ export class AuthController {
 
   async register(req: Request, res: Response) {
     try {
-      const userData = req.body;
+      const { email, password, firstName, lastName, phone, birthDate, role = 'BUYER' } = req.body;
       
-      if (!userData.email || !userData.password) {
-        return res.status(400).json({ error: 'Email and password are required' });
+      console.log('Registration attempt:', { email, firstName, lastName, role });
+      
+      if (!email || !password || !firstName || !lastName) {
+        const missingFields = [];
+        if (!email) missingFields.push('email');
+        if (!password) missingFields.push('password');
+        if (!firstName) missingFields.push('firstName');
+        if (!lastName) missingFields.push('lastName');
+        
+        console.log('Missing required fields:', missingFields);
+        return res.status(400).json({ error: `Missing required fields: ${missingFields.join(', ')}` });
       }
 
-      const existingUser = await this.authRepository.getUserByEmail(userData.email);
+      // Format birth date if provided
+      let birth_date;
+      if (birthDate) {
+        try {
+          birth_date = new Date(birthDate);
+          if (isNaN(birth_date.getTime())) {
+            console.log('Invalid birth date format:', birthDate);
+            return res.status(400).json({ error: 'Invalid birth date format' });
+          }
+        } catch (error) {
+          console.log('Error parsing birth date:', error);
+          return res.status(400).json({ error: 'Invalid birth date format' });
+        }
+      }
+
+      const existingUser = await this.authRepository.getUserByEmail(email);
       if (existingUser) {
+        console.log('User already exists with email:', email);
         return res.status(400).json({ error: 'User with this email already exists' });
       }
 
+      // Create user with the expected field names
+      const userData = {
+        email,
+        password,
+        first_name: firstName,
+        last_name: lastName,
+        phone,
+        birth_date,
+        role
+      };
+
+      console.log('Creating user with data:', { email, firstName, lastName, role });
       const user = await this.authRepository.createUser(userData);
+      console.log('User created successfully, ID:', user.id);
+      
       const session = await this.authRepository.createSession(user.id);
       const token = generateJWT(user.id);
 
@@ -26,8 +65,8 @@ export class AuthController {
         user: {
           id: user.id,
           email: user.email,
-          first_name: user.first_name || '',
-          last_name: user.last_name || '',
+          firstName: user.first_name,
+          lastName: user.last_name,
           role: user.role
         },
         token,
@@ -38,7 +77,11 @@ export class AuthController {
       });
     } catch (error) {
       console.error('Registration error:', error);
-      res.status(500).json({ error: 'Internal server error' });
+      if (error instanceof Error) {
+        console.error('Error message:', error.message);
+        console.error('Error stack:', error.stack);
+      }
+      res.status(500).json({ error: 'Internal server error during registration' });
     }
   }
 
@@ -62,8 +105,8 @@ export class AuthController {
         user: {
           id: user.id,
           email: user.email,
-          first_name: user.first_name || '',
-          last_name: user.last_name || '',
+          firstName: user.first_name,
+          lastName: user.last_name,
           role: user.role
         },
         token,
@@ -74,7 +117,7 @@ export class AuthController {
       });
     } catch (error) {
       console.error('Login error:', error);
-      res.status(500).json({ error: 'Internal server error' });
+      res.status(500).json({ error: 'Internal server error during login' });
     }
   }
 
@@ -89,7 +132,7 @@ export class AuthController {
       res.status(200).json({ message: 'Logged out successfully' });
     } catch (error) {
       console.error('Logout error:', error);
-      res.status(500).json({ error: 'Internal server error' });
+      res.status(500).json({ error: 'Internal server error during logout' });
     }
   }
 
@@ -112,14 +155,14 @@ export class AuthController {
         user: {
           id: session.user.id,
           email: session.user.email,
-          first_name: session.user.first_name,
-          last_name: session.user.last_name,
+          firstName: session.user.first_name,
+          lastName: session.user.last_name,
           role: session.user.role
         }
       });
     } catch (error) {
       console.error('Session validation error:', error);
-      res.status(500).json({ error: 'Internal server error' });
+      res.status(500).json({ error: 'Internal server error during session validation' });
     }
   }
 } 

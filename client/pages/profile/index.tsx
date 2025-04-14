@@ -30,6 +30,8 @@ const ProfilePage: NextPage = () => {
     return null; // This handles the case where useEffect hasn't redirected yet
   }
 
+  console.log('User data in profile:', user);
+
   return (
     <>
       <Head>
@@ -80,7 +82,7 @@ const ProfilePage: NextPage = () => {
                     <p className="text-muted mb-0 fw-bold">Имя:</p>
                   </div>
                   <div className="col-sm-9">
-                    <p className="mb-0">{user.first_name || 'Не указано'}</p>
+                    <p className="mb-0">{user.firstName || 'Не указано'}</p>
                   </div>
                 </div>
                 
@@ -89,7 +91,7 @@ const ProfilePage: NextPage = () => {
                     <p className="text-muted mb-0 fw-bold">Фамилия:</p>
                   </div>
                   <div className="col-sm-9">
-                    <p className="mb-0">{user.last_name || 'Не указано'}</p>
+                    <p className="mb-0">{user.lastName || 'Не указано'}</p>
                   </div>
                 </div>
                 
@@ -99,6 +101,20 @@ const ProfilePage: NextPage = () => {
                   </div>
                   <div className="col-sm-9">
                     <p className="mb-0">{user.email}</p>
+                  </div>
+                </div>
+                
+                <div className="row mb-4 p-2 bg-light rounded">
+                  <div className="col-sm-3">
+                    <p className="text-muted mb-0 fw-bold">Роль:</p>
+                  </div>
+                  <div className="col-sm-9">
+                    <p className="mb-0">
+                      {user.role === 'BUYER' ? 'Покупатель' : 
+                       user.role === 'SELLER' ? 'Продавец' : 
+                       user.role === 'ADMIN' ? 'Администратор' : 
+                       user.role}
+                    </p>
                   </div>
                 </div>
                 

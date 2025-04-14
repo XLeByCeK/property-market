@@ -14,17 +14,23 @@ const ChatComponent: React.FC = () => {
   useEffect(() => {
     const fetchConversations = async () => {
       try {
+        setLoading(true);
+        console.log('Fetching conversations...');
         const data = await getConversations();
+        console.log('Conversations loaded:', data);
         setConversations(data);
         setLoading(false);
-      } catch (err) {
-        setError('Не удалось загрузить чаты. Попробуйте позже.');
+      } catch (err: any) {
+        console.error('Failed to load conversations:', err);
+        setError(err.message || 'Не удалось загрузить чаты. Попробуйте позже.');
         setLoading(false);
       }
     };
 
     if (user) {
       fetchConversations();
+    } else {
+      setLoading(false);
     }
   }, [user]);
 

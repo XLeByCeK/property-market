@@ -13,46 +13,59 @@ const MessageView: React.FC<MessageViewProps> = ({ conversation, onConversationU
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { user } = useAuth();
 
-  // Fetch messages when conversation changes
+  // Create a unique ID for the conversation to track changes
+  const getConversationId = (conv: Conversation) => {
+    return `${conv.user.id}-${conv.property?.id || 'direct'}`;
+  };
+
+  // Fetch messages when conversation truly changes (not on every render)
   useEffect(() => {
-    const fetchMessages = async () => {
-      if (!user) return;
+    const currentConversationId = getConversationId(conversation);
+    
+    // Only fetch messages if this is a new conversation
+    if (currentConversationId !== activeConversationId) {
+      setActiveConversationId(currentConversationId);
       
-      try {
-        setLoading(true);
-        const data = await getMessages(
-          conversation.user.id,
-          conversation.property?.id
-        );
-        setMessages(data);
+      const fetchMessages = async () => {
+        if (!user || !conversation.property?.id) {
+          setLoading(false);
+          setError('Нет данных об объекте недвижимости');
+          return;
+        }
         
-        // Mark unread messages as read
-        const unreadMessageIds = data
-          .filter(msg => !msg.is_read && msg.sender_id === conversation.user.id)
-          .map(msg => msg.id);
+        try {
+          setLoading(true);
+          setError(null);
+          console.log('Fetching messages for property ID:', conversation.property.id);
           
-        if (unreadMessageIds.length > 0) {
-          await markAsRead(unreadMessageIds);
+          const data = await getMessages(
+            conversation.user.id,
+            conversation.property.id
+          );
           
-          // Update conversation to show 0 unread
+          console.log('Messages loaded:', data);
+          setMessages(data);
+          
+          // Handle unread messages if needed
           onConversationUpdate({
             ...conversation,
             unreadCount: 0
           });
+        } catch (err: any) {
+          console.error('Error loading messages:', err);
+          setError(err.message || 'Не удалось загрузить сообщения');
+        } finally {
+          setLoading(false);
         }
-      } catch (err) {
-        setError('Не удалось загрузить сообщения');
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    };
+      };
 
-    fetchMessages();
-  }, [conversation, user, onConversationUpdate]);
+      fetchMessages();
+    }
+  }, [conversation, user, onConversationUpdate, activeConversationId]);
 
   // Scroll to bottom when messages change
   useEffect(() => {
@@ -62,16 +75,22 @@ const MessageView: React.FC<MessageViewProps> = ({ conversation, onConversationU
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!newMessage.trim() || !user) return;
+    if (!newMessage.trim() || !user || !conversation.user.id) {
+      return;
+    }
     
     try {
       setSending(true);
+      setError(null);
       
+      console.log('Sending message to:', conversation.user.id);
       const sentMessage = await sendMessage(
         conversation.user.id,
         newMessage,
         conversation.property?.id
       );
+      
+      console.log('Message sent:', sentMessage);
       
       // Add message to list and clear input
       setMessages(prev => [...prev, sentMessage]);
@@ -82,12 +101,22 @@ const MessageView: React.FC<MessageViewProps> = ({ conversation, onConversationU
         ...conversation,
         lastMessage: sentMessage
       });
-    } catch (err) {
-      setError('Не удалось отправить сообщение');
-      console.error(err);
+    } catch (err: any) {
+      console.error('Failed to send message:', err);
+      setError(err.message || 'Не удалось отправить сообщение');
     } finally {
       setSending(false);
     }
+  };
+
+  // Get first name safely
+  const getFirstName = (user: any) => {
+    return user?.firstName || user?.first_name || '';
+  };
+
+  // Get last name safely
+  const getLastName = (user: any) => {
+    return user?.lastName || user?.last_name || '';
   };
 
   if (loading) {
@@ -105,7 +134,7 @@ const MessageView: React.FC<MessageViewProps> = ({ conversation, onConversationU
       {/* Conversation header */}
       <div className="chat-header p-3 border-bottom">
         <h5 className="mb-0">
-          {conversation.user.first_name} {conversation.user.last_name}
+          {getFirstName(conversation.user)} {getLastName(conversation.user)}
         </h5>
         {conversation.property && (
           <small className="text-muted">

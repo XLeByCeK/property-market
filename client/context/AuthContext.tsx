@@ -5,8 +5,8 @@ import api from '../services/api';
 export interface User {
   id: number;
   email: string;
-  first_name: string;
-  last_name: string;
+  firstName: string;
+  lastName: string;
   role: string;
 }
 
@@ -52,11 +52,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       try {
         console.log('Validating token with API');
         const data: any = await api.auth.getCurrentUser();
+        console.log('Current user data:', data);
         
         if (data && (data.user || data)) {
-          setUser(data.user || data);
+          // Extract user data from response
+          const userData = data.user || data;
+          console.log('Setting user data:', userData);
+          setUser(userData);
         } else {
           // If invalid, clear storage
+          console.log('No user data received, clearing storage');
           localStorage.removeItem('token');
           localStorage.removeItem('user');
         }
@@ -78,7 +83,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setIsLoading(true);
     
     try {
-      console.log('Sending registration request');
+      console.log('Sending registration request with data:', userData);
       const data: any = await api.auth.register({
         email: userData.email,
         password: userData.password,
@@ -89,7 +94,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         role: userData.role || 'BUYER'
       });
       
+      console.log('Registration successful, response:', data);
       const { user, token } = data;
+      
+      if (!user || !token) {
+        throw new Error('Invalid response from server');
+      }
       
       localStorage.setItem('token', token);
       localStorage.setItem('user', JSON.stringify(user));
@@ -116,10 +126,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setIsLoading(true);
     
     try {
-      console.log('Sending login request');
+      console.log('Sending login request for email:', email);
       const data: any = await api.auth.login(email, password);
       
+      console.log('Login successful, response:', data);
       const { user, token } = data;
+      
+      if (!user || !token) {
+        throw new Error('Invalid response from server');
+      }
       
       localStorage.setItem('token', token);
       localStorage.setItem('user', JSON.stringify(user));
@@ -145,7 +160,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setIsLoading(true);
     
     try {
+      console.log('Sending logout request');
       await api.auth.logout();
+      console.log('Logout successful');
     } catch (error) {
       console.error('Logout error:', error);
     } finally {

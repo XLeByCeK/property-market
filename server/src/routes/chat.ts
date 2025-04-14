@@ -1,7 +1,6 @@
 import express from 'express';
 import prisma from '../prisma';
 import { authenticateToken } from '../middleware/auth';
-import { Prisma } from '@prisma/client';
 
 const router = express.Router();
 
@@ -18,54 +17,63 @@ router.get('/conversations', authenticateToken, async (req, res) => {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
-    // Get all unique property IDs from messages where user is either sender or recipient
-    const properties = await prisma.user_message.findMany({
+    console.log(`Fetching conversations for user: ${req.user.id}`);
+
+    // Get all unique conversations from user messages
+    const conversations = await prisma.user_message.findMany({
       where: {
         OR: [
           { sender_id: req.user.id },
           { recipient_id: req.user.id }
         ]
       },
-      select: {
-        property_id: true,
-        property: true
-      },
-      distinct: ['property_id']
-    });
-
-    // For each property, get the latest message
-    const conversations = await Promise.all(
-      properties.map(async (p) => {
-        const latestMessage = await prisma.user_message.findFirst({
-          where: {
-            property_id: p.property_id,
-            OR: [
-              { sender_id: req.user!.id },
-              { recipient_id: req.user!.id }
-            ]
-          },
-          orderBy: {
-            created_at: 'desc'
-          },
-          include: {
-            sender: {
-              select: {
-                id: true,
-                first_name: true,
-                last_name: true
-              }
+      include: {
+        property: {
+          select: {
+            id: true,
+            title: true,
+            price: true,
+            images: {
+              where: { is_main: true },
+              take: 1
             }
           }
-        });
+        },
+        sender: {
+          select: {
+            id: true,
+            first_name: true,
+            last_name: true
+          }
+        },
+        recipient: {
+          select: {
+            id: true,
+            first_name: true,
+            last_name: true
+          }
+        }
+      },
+      orderBy: {
+        created_at: 'desc'
+      }
+    });
 
-        return {
-          property: p.property,
-          latest_message: latestMessage
-        };
-      })
-    );
+    // Group by property_id and get latest message for each
+    const groupedByProperty = conversations.reduce((acc, message) => {
+      const propertyId = message.property_id || 'direct';
+      const key = `${propertyId}`;
+      
+      if (!acc[key] || new Date(message.created_at) > new Date(acc[key].created_at)) {
+        acc[key] = message;
+      }
+      return acc;
+    }, {} as Record<string, any>);
 
-    res.json(conversations);
+    const conversationsList = Object.values(groupedByProperty);
+
+    console.log(`Found ${conversationsList.length} conversations`);
+    res.json(conversationsList);
   } catch (error) {
     console.error('Error fetching conversations:', error);
     res.status(500).json({ error: 'Failed to fetch conversations' });
@@ -83,6 +91,8 @@ router.get('/properties/:propertyId/messages', authenticateToken, async (req, re
     if (isNaN(propertyId)) {
       return res.status(400).json({ error: 'Invalid property ID' });
     }
+
+    console.log(`Fetching messages for property: ${propertyId}, user: ${req.user.id}`);
 
     // Check if property exists
     const property = await prisma.property.findUnique({
@@ -116,13 +126,20 @@ router.get('/properties/:propertyId/messages', authenticateToken, async (req, re
             last_name: true,
           },
         },
-        property: true
+        property: {
+          select: {
+            id: true,
+            title: true,
+            price: true
+          }
+        }
       },
       orderBy: {
         created_at: 'asc',
       },
     });
 
+    console.log(`Found ${messages.length} messages for property: ${propertyId}`);
     res.json(messages);
   } catch (error) {
     console.error('Error fetching messages:', error);
@@ -142,6 +159,8 @@ router.post('/messages', authenticateToken, async (req: express.Request<{}, {}, 
     if (!content || !recipient_id) {
       return res.status(400).json({ error: 'Message content and recipient ID are required' });
     }
+
+    console.log(`Sending message from ${req.user.id} to ${recipient_id} about property: ${property_id || 'direct'}`);
 
     // Check if recipient exists
     const recipient = await prisma.users.findUnique({
@@ -185,14 +204,54 @@ router.post('/messages', authenticateToken, async (req: express.Request<{}, {}, 
             last_name: true,
           },
         },
-        property: true
+        property: {
+          select: {
+            id: true,
+            title: true,
+            price: true
+          }
+        }
       },
     });
 
+    console.log(`Message sent successfully, id: ${message.id}`);
     res.json(message);
   } catch (error) {
     console.error('Error sending message:', error);
     res.status(500).json({ error: 'Failed to send message' });
+  }
+});
+
+// Mark messages as read endpoint (placeholder)
+router.post('/messages/read', authenticateToken, async (req, res) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const { messageIds } = req.body;
+
+    if (!messageIds || !Array.isArray(messageIds) || messageIds.length === 0) {
+      return res.status(400).json({ error: 'Message IDs are required' });
+    }
+
+    console.log(`Marking messages as read: ${messageIds.join(', ')}`);
+
+    // Update messages to mark them as read
+    await prisma.user_message.updateMany({
+      where: {
+        id: { in: messageIds },
+        recipient_id: req.user.id // Only mark as read if user is the recipient
+      },
+      data: {
+        is_read: true
+      }
+    });
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error marking messages as read:', error);
+    res.status(500).json({ error: 'Failed to mark messages as read' });
   }
 });
 

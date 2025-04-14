@@ -12,15 +12,27 @@ const authRepository = new AuthRepository(prisma);
 const authController = new AuthController(authRepository);
 
 // Register
-router.post('/register', (req, res) => authController.register(req, res));
+router.post('/register', (req, res) => {
+  console.log('Register endpoint called with body:', req.body);
+  return authController.register(req, res);
+});
 
 // Login
-router.post('/login', (req, res) => authController.login(req, res));
+router.post('/login', (req, res) => {
+  console.log('Login endpoint called with email:', req.body.email);
+  return authController.login(req, res);
+});
 
 // Logout
-router.post('/logout', (req, res) => authController.logout(req, res));
+router.post('/logout', (req, res) => {
+  console.log('Logout endpoint called');
+  return authController.logout(req, res);
+});
 
 // Validate session / Get current user
-router.get('/me', (req, res) => authController.validateSession(req, res));
+router.get('/me', (req, res) => {
+  console.log('Me endpoint called');
+  return authController.validateSession(req, res);
+});
 
 export default router; 

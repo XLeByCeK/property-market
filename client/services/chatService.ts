@@ -1,13 +1,4 @@
-import axios from 'axios';
-
-// API URL
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
-
-// Get auth token from localStorage
-const getAuthHeader = () => {
-  const token = localStorage.getItem('token');
-  return token ? { Authorization: `Bearer ${token}` } : {};
-};
+import api from './api';
 
 // Interface for message data
 export interface Message {
@@ -20,8 +11,22 @@ export interface Message {
   created_at: string;
   sender?: {
     id: number;
-    first_name: string;
-    last_name: string;
+    first_name?: string;
+    last_name?: string;
+    firstName?: string;
+    lastName?: string;
+  };
+  recipient?: {
+    id: number;
+    first_name?: string;
+    last_name?: string;
+    firstName?: string;
+    lastName?: string;
+  };
+  property?: {
+    id: number;
+    title: string;
+    price: number;
   };
 }
 
@@ -29,8 +34,10 @@ export interface Message {
 export interface Conversation {
   user: {
     id: number;
-    first_name: string;
-    last_name: string;
+    first_name?: string;
+    last_name?: string;
+    firstName?: string;
+    lastName?: string;
   };
   property?: {
     id: number;
@@ -41,31 +48,96 @@ export interface Conversation {
   unreadCount: number;
 }
 
+// Helper function to normalize user data with both naming conventions
+const normalizeUser = (user: any) => {
+  if (!user) return { id: 0, first_name: 'Unknown', last_name: 'User' };
+  
+  // Copy the user object
+  const normalizedUser = { ...user };
+  
+  // Make sure both versions of names are available
+  if (user.firstName && !user.first_name) {
+    normalizedUser.first_name = user.firstName;
+  }
+  if (user.lastName && !user.last_name) {
+    normalizedUser.last_name = user.lastName;
+  }
+  if (user.first_name && !user.firstName) {
+    normalizedUser.firstName = user.first_name;
+  }
+  if (user.last_name && !user.lastName) {
+    normalizedUser.lastName = user.last_name;
+  }
+  
+  return normalizedUser;
+};
+
+// Transform API data into Conversation objects
+const transformConversations = (data: any[]): Conversation[] => {
+  console.log('Transforming conversations data:', data);
+  
+  return data.map(conv => {
+    // Extract property if available
+    const property = conv.property ? {
+      id: conv.property.id,
+      title: conv.property.title,
+      price: conv.property.price
+    } : undefined;
+    
+    // Determine the other user (not the current user)
+    const otherUser = normalizeUser(conv.sender || conv.recipient);
+    
+    // Create a message object from the conversation
+    const message: Message = {
+      id: conv.id,
+      sender_id: conv.sender_id,
+      recipient_id: conv.recipient_id,
+      property_id: conv.property_id,
+      message: conv.message || '',
+      is_read: conv.is_read || false,
+      created_at: conv.created_at || new Date().toISOString(),
+      sender: conv.sender ? normalizeUser(conv.sender) : undefined,
+      recipient: conv.recipient ? normalizeUser(conv.recipient) : undefined,
+      property: property
+    };
+    
+    return {
+      user: otherUser,
+      property,
+      lastMessage: message,
+      unreadCount: 0 // This would need to be calculated from the API response
+    };
+  });
+};
+
 // Get all conversations for the current user
 export const getConversations = async (): Promise<Conversation[]> => {
   try {
-    const response = await axios.get(`${API_URL}/messages/conversations`, {
-      headers: getAuthHeader()
-    });
-    return response.data;
+    const data = await api.chat.getConversations() as any[];
+    console.log('Fetched conversations data:', data);
+    return transformConversations(data);
   } catch (error) {
     console.error('Error fetching conversations:', error);
     throw error;
   }
 };
 
-// Get all messages for a specific conversation
+// Get all messages for a specific property
 export const getMessages = async (userId: number, propertyId?: number): Promise<Message[]> => {
   try {
-    let url = `${API_URL}/messages/with/${userId}`;
-    if (propertyId) {
-      url += `?propertyId=${propertyId}`;
+    if (!propertyId) {
+      throw new Error('Property ID is required');
     }
     
-    const response = await axios.get(url, {
-      headers: getAuthHeader()
-    });
-    return response.data;
+    const data = await api.chat.getPropertyMessages(propertyId) as Message[];
+    console.log('Fetched messages data for property ID', propertyId, ':', data);
+    
+    // Normalize user data in messages
+    return data.map(message => ({
+      ...message,
+      sender: message.sender ? normalizeUser(message.sender) : undefined,
+      recipient: message.recipient ? normalizeUser(message.recipient) : undefined
+    }));
   } catch (error) {
     console.error('Error fetching messages:', error);
     throw error;
@@ -75,30 +147,38 @@ export const getMessages = async (userId: number, propertyId?: number): Promise<
 // Send a new message
 export const sendMessage = async (
   recipientId: number, 
-  message: string, 
+  content: string, 
   propertyId?: number
 ): Promise<Message> => {
   try {
-    const response = await axios.post(
-      `${API_URL}/messages/send`,
-      { recipientId, message, propertyId },
-      { headers: getAuthHeader() }
-    );
-    return response.data;
+    console.log('Sending message:', { content, recipientId, propertyId });
+    const data = await api.chat.sendMessage({
+      content,
+      recipient_id: recipientId,
+      property_id: propertyId
+    }) as Message;
+    
+    console.log('Message sent successfully:', data);
+    
+    // Normalize user data in response
+    return {
+      ...data,
+      sender: data.sender ? normalizeUser(data.sender) : undefined,
+      recipient: data.recipient ? normalizeUser(data.recipient) : undefined
+    };
   } catch (error) {
     console.error('Error sending message:', error);
     throw error;
   }
 };
 
-// Mark messages as read
+// Mark messages as read (placeholder, actual implementation depends on API)
 export const markAsRead = async (messageIds: number[]): Promise<void> => {
   try {
-    await axios.post(
-      `${API_URL}/messages/read`,
-      { messageIds },
-      { headers: getAuthHeader() }
-    );
+    // This endpoint would need to be implemented on the server
+    console.log('Marking messages as read:', messageIds);
+    // For now, just return without making an API call
+    return;
   } catch (error) {
     console.error('Error marking messages as read:', error);
     throw error;
