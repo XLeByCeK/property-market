@@ -28,6 +28,7 @@ export class AuthController {
           email: user.email,
           first_name: user.first_name || '',
           last_name: user.last_name || '',
+          role: user.role
         },
         token,
         session: {
@@ -63,6 +64,7 @@ export class AuthController {
           email: user.email,
           first_name: user.first_name || '',
           last_name: user.last_name || '',
+          role: user.role
         },
         token,
         session: {
@@ -78,7 +80,9 @@ export class AuthController {
 
   async logout(req: Request, res: Response) {
     try {
-      const token = req.headers.authorization?.split(' ')[1];
+      const authHeader = req.headers.authorization;
+      const token = authHeader ? authHeader.split(' ')[1] : null;
+      
       if (token) {
         await this.authRepository.deleteSession(token);
       }
@@ -91,7 +95,9 @@ export class AuthController {
 
   async validateSession(req: Request, res: Response) {
     try {
-      const token = req.headers.authorization?.split(' ')[1];
+      const authHeader = req.headers.authorization;
+      const token = authHeader ? authHeader.split(' ')[1] : null;
+      
       if (!token) {
         return res.status(401).json({ error: 'No token provided' });
       }
@@ -101,7 +107,16 @@ export class AuthController {
         return res.status(401).json({ error: 'Invalid or expired session' });
       }
 
-      res.json({ valid: true });
+      res.json({ 
+        valid: true,
+        user: {
+          id: session.user.id,
+          email: session.user.email,
+          first_name: session.user.first_name,
+          last_name: session.user.last_name,
+          role: session.user.role
+        }
+      });
     } catch (error) {
       console.error('Session validation error:', error);
       res.status(500).json({ error: 'Internal server error' });

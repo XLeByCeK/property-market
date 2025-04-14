@@ -1,83 +1,102 @@
-import { Pool } from 'pg';
+import { PrismaClient } from '@prisma/client';
 import { v4 as uuidv4 } from 'uuid';
 import { hash, compare } from 'bcryptjs';
 
-export interface User {
-  id: number;
+export interface UserData {
   email: string;
-  password_hash: string;
-  first_name: string | null;
-  last_name: string | null;
-  phone: string | null;
-  birth_date: Date | null;
-  created_at: Date | null;
-  updated_at: Date | null;
+  password: string;
+  first_name: string;
+  last_name: string;
+  phone?: string;
+  birth_date?: Date;
+  role?: string;
 }
 
-export interface Session {
-  id: number;
-  user_id: number;
-  token: string;
-  expires_at: Date;
-  created_at: Date | null;
-}
+// In-memory sessions store (could be replaced with Redis, DB, etc.)
+const sessions = new Map<string, { userId: number, expiresAt: Date }>();
 
 export class AuthRepository {
-  constructor(private pool: Pool) {}
+  constructor(private prisma: PrismaClient) {}
 
-  async getUserByEmail(email: string): Promise<User | null> {
-    const result = await this.pool.query(
-      'SELECT * FROM users WHERE email = $1',
-      [email]
-    );
-    return result.rows[0] || null;
+  async getUserByEmail(email: string) {
+    return this.prisma.users.findUnique({
+      where: { email }
+    });
   }
 
-  async createUser(userData: Omit<User, 'id' | 'created_at' | 'updated_at' | 'password_hash'> & { password: string }): Promise<User> {
+  async getUserById(id: number) {
+    return this.prisma.users.findUnique({
+      where: { id }
+    });
+  }
+
+  async createUser(userData: UserData) {
     const hashedPassword = await hash(userData.password, 10);
-    const result = await this.pool.query(
-      `INSERT INTO users (email, password_hash, first_name, last_name, phone, birth_date, created_at, updated_at)
-       VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())
-       RETURNING *`,
-      [userData.email, hashedPassword, userData.first_name, userData.last_name, userData.phone, userData.birth_date]
-    );
-    return result.rows[0];
+    
+    return this.prisma.users.create({
+      data: {
+        email: userData.email,
+        password: hashedPassword,
+        first_name: userData.first_name,
+        last_name: userData.last_name,
+        phone: userData.phone,
+        birth_date: userData.birth_date,
+        role: userData.role || 'BUYER',
+      }
+    });
   }
 
-  async validateCredentials(credentials: { email: string; password: string }): Promise<User | null> {
+  async validateCredentials(credentials: { email: string; password: string }) {
     const user = await this.getUserByEmail(credentials.email);
     if (!user) return null;
 
-    const isValid = await compare(credentials.password, user.password_hash);
+    const isValid = await compare(credentials.password, user.password);
     return isValid ? user : null;
   }
 
-  async createSession(userId: number): Promise<Session> {
+  async createSession(userId: number) {
     const token = uuidv4();
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 7); // Session expires in 7 days
 
-    const result = await this.pool.query(
-      `INSERT INTO sessions (user_id, token, expires_at, created_at)
-       VALUES ($1, $2, $3, NOW())
-       RETURNING *`,
-      [userId, token, expiresAt]
-    );
-    return result.rows[0];
+    // Store session in memory
+    sessions.set(token, {
+      userId,
+      expiresAt
+    });
+
+    return {
+      token,
+      expires_at: expiresAt
+    };
   }
 
-  async validateSession(token: string): Promise<Session | null> {
-    const result = await this.pool.query(
-      'SELECT * FROM sessions WHERE token = $1 AND expires_at > NOW()',
-      [token]
-    );
-    return result.rows[0] || null;
+  async validateSession(token: string) {
+    const session = sessions.get(token);
+    if (!session) return null;
+
+    const now = new Date();
+    if (session.expiresAt < now) {
+      // Session expired
+      sessions.delete(token);
+      return null;
+    }
+
+    // Get user data
+    const user = await this.getUserById(session.userId);
+    if (!user) {
+      sessions.delete(token);
+      return null;
+    }
+
+    return {
+      token,
+      expires_at: session.expiresAt,
+      user
+    };
   }
 
-  async deleteSession(token: string): Promise<void> {
-    await this.pool.query(
-      'DELETE FROM sessions WHERE token = $1',
-      [token]
-    );
+  async deleteSession(token: string) {
+    sessions.delete(token);
   }
 } 

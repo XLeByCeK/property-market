@@ -1,8 +1,5 @@
 import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
-import axios from 'axios';
-
-// API URL
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
+import api from '../services/api';
 
 // Interfaces
 export interface User {
@@ -10,6 +7,7 @@ export interface User {
   email: string;
   first_name: string;
   last_name: string;
+  role: string;
 }
 
 interface AuthContextType {
@@ -25,10 +23,11 @@ interface AuthContextType {
 export interface RegisterData {
   email: string;
   password: string;
-  first_name: string;
-  last_name: string;
+  firstName: string;
+  lastName: string;
   phone?: string;
-  birth_date?: string;
+  birthDate?: string;
+  role?: string;
 }
 
 // Create context
@@ -45,32 +44,29 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const checkAuth = async () => {
       const token = localStorage.getItem('token');
       
-      if (token) {
-        try {
-          // Validate token with backend
-          const response = await axios.get(`${API_URL}/auth/validate`, {
-            headers: { Authorization: `Bearer ${token}` }
-          });
-          
-          if (response.data.valid) {
-            // If valid, get user data
-            const userData = JSON.parse(localStorage.getItem('user') || 'null');
-            if (userData) {
-              setUser(userData);
-            }
-          } else {
-            // If invalid, clear storage
-            localStorage.removeItem('token');
-            localStorage.removeItem('user');
-          }
-        } catch (error) {
-          console.error('Auth validation error:', error);
+      if (!token) {
+        setIsLoading(false);
+        return;
+      }
+      
+      try {
+        console.log('Validating token with API');
+        const data: any = await api.auth.getCurrentUser();
+        
+        if (data && (data.user || data)) {
+          setUser(data.user || data);
+        } else {
+          // If invalid, clear storage
           localStorage.removeItem('token');
           localStorage.removeItem('user');
         }
+      } catch (error) {
+        console.error('Auth validation error:', error);
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+      } finally {
+        setIsLoading(false);
       }
-      
-      setIsLoading(false);
     };
 
     checkAuth();
@@ -82,10 +78,18 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setIsLoading(true);
     
     try {
-      console.log('Sending registration request to:', `${API_URL}/auth/register`);
-      const response = await axios.post(`${API_URL}/auth/register`, userData);
+      console.log('Sending registration request');
+      const data: any = await api.auth.register({
+        email: userData.email,
+        password: userData.password,
+        firstName: userData.firstName,
+        lastName: userData.lastName,
+        phone: userData.phone,
+        birthDate: userData.birthDate,
+        role: userData.role || 'BUYER'
+      });
       
-      const { user, token } = response.data;
+      const { user, token } = data;
       
       localStorage.setItem('token', token);
       localStorage.setItem('user', JSON.stringify(user));
@@ -93,7 +97,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setUser(user);
     } catch (error: any) {
       console.error('Registration error details:', error);
-      setError(error.response?.data?.error || 'Registration failed');
+      if (error.response?.data?.error) {
+        setError(error.response.data.error);
+      } else if (error.message) {
+        setError(error.message);
+      } else {
+        setError('Registration failed. Please try again.');
+      }
       throw error;
     } finally {
       setIsLoading(false);
@@ -106,10 +116,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setIsLoading(true);
     
     try {
-      console.log('Sending login request to:', `${API_URL}/auth/login`);
-      const response = await axios.post(`${API_URL}/auth/login`, { email, password });
+      console.log('Sending login request');
+      const data: any = await api.auth.login(email, password);
       
-      const { user, token } = response.data;
+      const { user, token } = data;
       
       localStorage.setItem('token', token);
       localStorage.setItem('user', JSON.stringify(user));
@@ -117,7 +127,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setUser(user);
     } catch (error: any) {
       console.error('Login error details:', error);
-      setError(error.response?.data?.error || 'Login failed');
+      if (error.response?.data?.error) {
+        setError(error.response.data.error);
+      } else if (error.message) {
+        setError(error.message);
+      } else {
+        setError('Login failed. Please try again.');
+      }
       throw error;
     } finally {
       setIsLoading(false);
@@ -129,13 +145,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setIsLoading(true);
     
     try {
-      const token = localStorage.getItem('token');
-      
-      if (token) {
-        await axios.post(`${API_URL}/auth/logout`, {}, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-      }
+      await api.auth.logout();
     } catch (error) {
       console.error('Logout error:', error);
     } finally {

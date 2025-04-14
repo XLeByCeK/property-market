@@ -1,12 +1,17 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from "@prisma/client";
 
-const prisma = new PrismaClient({
-  log: ['query', 'info', 'warn', 'error'],
+// Export a single PrismaClient instance to be used across the app
+const prisma = new PrismaClient();
+
+// Handle application shutdown
+process.on('SIGINT', async () => {
+  await prisma.$disconnect();
+  process.exit(0);
 });
 
-// Обработка завершения работы приложения
-process.on('beforeExit', async () => {
+process.on('SIGTERM', async () => {
   await prisma.$disconnect();
+  process.exit(0);
 });
 
 export default prisma; 

@@ -23,7 +23,7 @@ declare global {
 
 export const authenticateToken = async (req: Request, res: Response, next: NextFunction) => {
   const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1];
+  const token = authHeader ? authHeader.split(' ')[1] : null;
 
   if (!token) {
     return res.status(401).json({ error: 'No token provided' });
