@@ -28,6 +28,9 @@ export interface RegisterData {
   phone?: string;
   birthDate?: string;
   role?: string;
+  first_name?: string;
+  last_name?: string;
+  birth_date?: string;
 }
 
 // Create context
@@ -84,15 +87,22 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     
     try {
       console.log('Sending registration request with data:', userData);
-      const data: any = await api.auth.register({
+      
+      // Убедимся, что данные отправляются в правильном формате
+      const registerData = {
         email: userData.email,
         password: userData.password,
-        firstName: userData.firstName,
-        lastName: userData.lastName,
+        // Используем значения из snake_case если есть, иначе из camelCase
+        first_name: userData.first_name || userData.firstName,
+        last_name: userData.last_name || userData.lastName,
         phone: userData.phone,
-        birthDate: userData.birthDate,
+        birth_date: userData.birth_date || userData.birthDate,
         role: userData.role || 'BUYER'
-      });
+      };
+      
+      console.log('Final registration data to be sent:', registerData);
+      
+      const data: any = await api.auth.register(registerData);
       
       console.log('Registration successful, response:', data);
       const { user, token } = data;

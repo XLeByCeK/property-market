@@ -31,8 +31,20 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess }) => {
     setIsLoading(true);
 
     try {
-      console.log('Submitting registration form with data:', formData);
-      await register(formData);
+      console.log('Submitting registration form with data:', JSON.stringify(formData));
+      // Преобразуем поля в формат snake_case
+      const convertedData = {
+        ...formData,
+        // Сохраняем оригинальные поля и добавляем snake_case версии
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        birthDate: formData.birthDate,
+        first_name: formData.firstName,
+        last_name: formData.lastName,
+        birth_date: formData.birthDate
+      };
+      console.log('Converted data for registration:', JSON.stringify(convertedData));
+      await register(convertedData);
       onSuccess();
     } catch (error) {
       console.error('Registration failed:', error);

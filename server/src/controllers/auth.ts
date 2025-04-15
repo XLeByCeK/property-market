@@ -7,28 +7,49 @@ export class AuthController {
 
   async register(req: Request, res: Response) {
     try {
-      const { email, password, firstName, lastName, phone, birthDate, role = 'BUYER' } = req.body;
+      console.log('Raw request body:', JSON.stringify(req.body));
+      const { email, password, firstName, lastName, phone, birthDate, role = 'BUYER', first_name, last_name } = req.body;
       
-      console.log('Registration attempt:', { email, firstName, lastName, role });
+      console.log('Full registration request body:', req.body);
+      console.log('Registration attempt with all fields:', { 
+        email, 
+        password: password ? '(present)' : '(missing)', 
+        firstName,
+        lastName, 
+        phone, 
+        birthDate, 
+        role,
+        first_name,
+        last_name
+      });
       
-      if (!email || !password || !firstName || !lastName) {
-        const missingFields = [];
-        if (!email) missingFields.push('email');
-        if (!password) missingFields.push('password');
-        if (!firstName) missingFields.push('firstName');
-        if (!lastName) missingFields.push('lastName');
-        
-        console.log('Missing required fields:', missingFields);
-        return res.status(400).json({ error: `Missing required fields: ${missingFields.join(', ')}` });
+      // Проверяем наличие необходимых полей в обоих форматах
+      const missingFields = [];
+      if (!email) missingFields.push('email');
+      if (!password) missingFields.push('password');
+      
+      // Проверяем имя и фамилию в обоих форматах
+      const actualFirstName = first_name || firstName;
+      const actualLastName = last_name || lastName;
+      
+      if (!actualFirstName) missingFields.push('firstName/first_name');
+      if (!actualLastName) missingFields.push('lastName/last_name');
+      
+      if (missingFields.length > 0) {
+        const message = `Missing required fields: ${missingFields.join(', ')}. Received fields: ${Object.keys(req.body).join(', ')}`;
+        console.log(message);
+        return res.status(400).json({ error: message });
       }
 
       // Format birth date if provided
-      let birth_date;
-      if (birthDate) {
+      let parsedBirthDate: Date | undefined;
+      const rawBirthDate = req.body.birth_date || birthDate;
+      
+      if (rawBirthDate) {
         try {
-          birth_date = new Date(birthDate);
-          if (isNaN(birth_date.getTime())) {
-            console.log('Invalid birth date format:', birthDate);
+          parsedBirthDate = new Date(rawBirthDate);
+          if (isNaN(parsedBirthDate.getTime())) {
+            console.log('Invalid birth date format:', rawBirthDate);
             return res.status(400).json({ error: 'Invalid birth date format' });
           }
         } catch (error) {
@@ -47,14 +68,14 @@ export class AuthController {
       const userData = {
         email,
         password,
-        first_name: firstName,
-        last_name: lastName,
+        first_name: actualFirstName,
+        last_name: actualLastName,
         phone,
-        birth_date,
+        birth_date: parsedBirthDate,
         role
       };
 
-      console.log('Creating user with data:', { email, firstName, lastName, role });
+      console.log('Creating user with data:', userData);
       const user = await this.authRepository.createUser(userData);
       console.log('User created successfully, ID:', user.id);
       
