@@ -93,12 +93,11 @@ export interface Property {
 }
 
 // Get property by ID
-export const getPropertyById = async (id: string | number): Promise<PropertyFromAPI> => {
+export const getPropertyById = async (id: number) => {
   try {
-    const response = await api.properties.getById(id) as PropertyFromAPI;
-    return response;
+    return await api.properties.getById(id);
   } catch (error) {
-    console.error('Error fetching property details:', error);
+    console.error('Error fetching property:', error);
     throw error;
   }
 };
@@ -221,5 +220,129 @@ export const getPropertiesForRent = async (limit = 8): Promise<Property[]> => {
     console.error('Error fetching properties for rent:', error);
     // Возвращаем пустой массив вместо ошибки
     return [];
+  }
+};
+
+// Helper functions for property data transformations
+export const transformPropertyToFormData = (property: PropertyFromAPI): PropertyFormData => {
+  return {
+    title: property.title,
+    description: property.description,
+    price: property.price,
+    area: property.area,
+    rooms: property.rooms,
+    floor: property.floor,
+    total_floors: property.total_floors,
+    address: property.address,
+    year_built: property.year_built,
+    property_type_id: property.property_type_id,
+    transaction_type_id: property.transaction_type_id,
+    city_id: property.city_id,
+    district_id: property.district_id,
+    metro_id: property.metro_id,
+    metro_distance: property.metro_distance,
+    is_new_building: property.is_new_building,
+    is_commercial: property.is_commercial,
+    is_country: property.is_country,
+    images: property.images.map(img => img.image_url),
+  };
+};
+
+// Interface for property form data
+export interface PropertyFormData {
+  title: string;
+  description: string;
+  price: number;
+  area: number;
+  rooms: number;
+  floor?: number;
+  total_floors?: number;
+  address: string;
+  year_built?: number;
+  property_type_id: number;
+  transaction_type_id: number;
+  city_id: number;
+  district_id?: number;
+  metro_id?: number;
+  metro_distance?: number;
+  is_new_building: boolean;
+  is_commercial: boolean;
+  is_country: boolean;
+  images: string[];
+}
+
+// Methods for reference data
+export const getPropertyTypes = async () => {
+  try {
+    return await api.properties.getPropertyTypes();
+  } catch (error) {
+    console.error('Error fetching property types:', error);
+    return [];
+  }
+};
+
+export const getTransactionTypes = async () => {
+  try {
+    return await api.properties.getTransactionTypes();
+  } catch (error) {
+    console.error('Error fetching transaction types:', error);
+    return [];
+  }
+};
+
+export const getCities = async () => {
+  try {
+    return await api.properties.getCities();
+  } catch (error) {
+    console.error('Error fetching cities:', error);
+    return [];
+  }
+};
+
+export const getDistrictsByCityId = async (cityId: number) => {
+  try {
+    return await api.properties.getDistrictsByCityId(cityId);
+  } catch (error) {
+    console.error('Error fetching districts:', error);
+    return [];
+  }
+};
+
+export const getMetroStationsByCityId = async (cityId: number) => {
+  try {
+    return await api.properties.getMetroStationsByCityId(cityId);
+  } catch (error) {
+    console.error('Error fetching metro stations:', error);
+    return [];
+  }
+};
+
+// Methods for image upload
+export const uploadPropertyImages = async (formData: FormData) => {
+  try {
+    return await api.properties.uploadImages(formData);
+  } catch (error) {
+    console.error('Error uploading images:', error);
+    throw error;
+  }
+};
+
+// Create a new property
+export const createProperty = async (propertyData: PropertyFormData) => {
+  try {
+    return await api.properties.create(propertyData);
+  } catch (error) {
+    console.error('Error creating property:', error);
+    throw error;
+  }
+};
+
+// Update an existing property
+export const updateProperty = async (id: number, propertyData: PropertyFormData) => {
+  try {
+    return await api.properties.update(id, propertyData);
+  } catch (error) {
+    console.error('Error updating property:', error);
+    throw error;
   }
 }; 

@@ -2,8 +2,72 @@ import express from 'express';
 import prisma from '../prisma';
 import { authenticateToken } from '../middleware/auth';
 import { Prisma } from '@prisma/client';
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
 
 const router = express.Router();
+
+// Configure multer storage
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const uploadDir = path.join(__dirname, '../../public/uploads/properties');
+    
+    // Create directory if it doesn't exist
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+    
+    cb(null, uploadDir);
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    const ext = path.extname(file.originalname);
+    cb(null, `property-${uniqueSuffix}${ext}`);
+  }
+});
+
+// File filter for images
+const fileFilter = (req: express.Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
+  if (file.mimetype.startsWith('image/')) {
+    cb(null, true);
+  } else {
+    cb(null, false);
+  }
+};
+
+const upload = multer({ 
+  storage,
+  fileFilter,
+  limits: {
+    fileSize: 5 * 1024 * 1024, // 5MB limit
+  }
+});
+
+// Upload property images
+router.post('/upload-images', authenticateToken, upload.array('images', 10), async (req, res) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+    
+    if (!req.files || (Array.isArray(req.files) && req.files.length === 0)) {
+      return res.status(400).json({ error: 'No files uploaded' });
+    }
+    
+    const files = req.files as Express.Multer.File[];
+    const imageUrls = files.map(file => {
+      // Convert Windows path separators to URL format
+      const relativePath = path.relative(path.join(__dirname, '../../public'), file.path).replace(/\\/g, '/');
+      return `/${relativePath}`;
+    });
+    
+    res.status(200).json({ imageUrls });
+  } catch (error) {
+    console.error('Error uploading images:', error);
+    res.status(500).json({ error: 'Failed to upload images' });
+  }
+});
 
 type CreatePropertyRequest = {
   title: string;
@@ -474,6 +538,126 @@ router.delete('/:id', authenticateToken, async (req, res) => {
   } catch (error) {
     console.error('Error deleting property:', error);
     res.status(500).json({ error: 'Failed to delete property' });
+  }
+});
+
+// Get properties for the current user
+router.get('/user', authenticateToken, async (req, res) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const properties = await prisma.property.findMany({
+      where: {
+        user_id: req.user.id,
+      },
+      include: {
+        property_type: true,
+        transaction_type: true,
+        city: true,
+        images: {
+          orderBy: {
+            order: 'asc',
+          },
+        },
+      },
+      orderBy: {
+        created_at: 'desc',
+      },
+    });
+
+    res.json(properties);
+  } catch (error) {
+    console.error('Error fetching user properties:', error);
+    res.status(500).json({ error: 'Failed to fetch properties' });
+  }
+});
+
+// Route for reference data endpoints
+router.get('/property-types', async (req, res) => {
+  try {
+    const propertyTypes = await prisma.property_type.findMany({
+      orderBy: {
+        name: 'asc',
+      },
+    });
+    res.json(propertyTypes);
+  } catch (error) {
+    console.error('Error fetching property types:', error);
+    res.status(500).json({ error: 'Failed to fetch property types' });
+  }
+});
+
+router.get('/transaction-types', async (req, res) => {
+  try {
+    const transactionTypes = await prisma.transaction_type.findMany({
+      orderBy: {
+        name: 'asc',
+      },
+    });
+    res.json(transactionTypes);
+  } catch (error) {
+    console.error('Error fetching transaction types:', error);
+    res.status(500).json({ error: 'Failed to fetch transaction types' });
+  }
+});
+
+router.get('/cities', async (req, res) => {
+  try {
+    const cities = await prisma.city.findMany({
+      orderBy: {
+        name: 'asc',
+      },
+    });
+    res.json(cities);
+  } catch (error) {
+    console.error('Error fetching cities:', error);
+    res.status(500).json({ error: 'Failed to fetch cities' });
+  }
+});
+
+router.get('/cities/:cityId/districts', async (req, res) => {
+  try {
+    const cityId = parseInt(req.params.cityId);
+    if (isNaN(cityId)) {
+      return res.status(400).json({ error: 'Invalid city ID' });
+    }
+    
+    const districts = await prisma.district.findMany({
+      where: {
+        city_id: cityId,
+      },
+      orderBy: {
+        name: 'asc',
+      },
+    });
+    res.json(districts);
+  } catch (error) {
+    console.error('Error fetching districts:', error);
+    res.status(500).json({ error: 'Failed to fetch districts' });
+  }
+});
+
+router.get('/cities/:cityId/metro', async (req, res) => {
+  try {
+    const cityId = parseInt(req.params.cityId);
+    if (isNaN(cityId)) {
+      return res.status(400).json({ error: 'Invalid city ID' });
+    }
+    
+    const metroStations = await prisma.metro_station.findMany({
+      where: {
+        city_id: cityId,
+      },
+      orderBy: {
+        name: 'asc',
+      },
+    });
+    res.json(metroStations);
+  } catch (error) {
+    console.error('Error fetching metro stations:', error);
+    res.status(500).json({ error: 'Failed to fetch metro stations' });
   }
 });
 

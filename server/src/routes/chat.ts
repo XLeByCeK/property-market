@@ -25,7 +25,14 @@ router.get('/conversations', authenticateToken, async (req, res) => {
         OR: [
           { sender_id: req.user.id },
           { recipient_id: req.user.id }
-        ]
+        ],
+        // Filter out self-messages
+        NOT: {
+          AND: [
+            { sender_id: req.user.id },
+            { recipient_id: req.user.id }
+          ]
+        }
       },
       include: {
         property: {
@@ -92,7 +99,10 @@ router.get('/properties/:propertyId/messages', authenticateToken, async (req, re
       return res.status(400).json({ error: 'Invalid property ID' });
     }
 
-    console.log(`Fetching messages for property: ${propertyId}, user: ${req.user.id}`);
+    // Получаем userId из запроса (если указан) или используем идентификатор текущего пользователя
+    const otherUserId = req.query.userId ? parseInt(req.query.userId as string) : null;
+    
+    console.log(`Fetching messages for property: ${propertyId}, user: ${req.user.id}, otherUser: ${otherUserId || 'all'}`);
 
     // Check if property exists
     const property = await prisma.property.findUnique({
@@ -103,14 +113,41 @@ router.get('/properties/:propertyId/messages', authenticateToken, async (req, re
       return res.status(404).json({ error: 'Property not found' });
     }
 
-    const messages = await prisma.user_message.findMany({
-      where: {
-        property_id: propertyId,
-        OR: [
+    // Если указан конкретный пользователь, ищем сообщения только для этого разговора
+    let messagesWhere: any = {
+      property_id: propertyId,
+      // Filter out self-messages
+      NOT: {
+        AND: [
           { sender_id: req.user.id },
           { recipient_id: req.user.id }
         ]
-      },
+      }
+    };
+    
+    if (otherUserId) {
+      messagesWhere.OR = [
+        // Сообщения от текущего пользователя другому пользователю
+        {
+          sender_id: req.user.id,
+          recipient_id: otherUserId
+        },
+        // Сообщения от другого пользователя текущему пользователю
+        {
+          sender_id: otherUserId,
+          recipient_id: req.user.id
+        }
+      ];
+    } else {
+      // Если пользователь не указан, ищем все сообщения пользователя по этому объекту
+      messagesWhere.OR = [
+        { sender_id: req.user.id },
+        { recipient_id: req.user.id }
+      ];
+    }
+
+    const messages = await prisma.user_message.findMany({
+      where: messagesWhere,
       include: {
         sender: {
           select: {
@@ -158,6 +195,11 @@ router.post('/messages', authenticateToken, async (req: express.Request<{}, {}, 
 
     if (!content || !recipient_id) {
       return res.status(400).json({ error: 'Message content and recipient ID are required' });
+    }
+    
+    // Prevent sending messages to oneself
+    if (recipient_id === req.user.id) {
+      return res.status(400).json({ error: 'Cannot send a message to yourself' });
     }
 
     console.log(`Sending message from ${req.user.id} to ${recipient_id} about property: ${property_id || 'direct'}`);

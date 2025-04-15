@@ -136,6 +136,12 @@ export const api = {
         params: { limit },
       }),
       
+    getUserProperties: () => 
+      apiRequest({
+        method: 'GET',
+        url: '/properties/user',
+      }),
+      
     create: (propertyData: any) => 
       apiRequest({
         method: 'POST',
@@ -155,6 +161,46 @@ export const api = {
         method: 'DELETE',
         url: `/properties/${id}`,
       }),
+      
+    uploadImages: (formData: FormData) => 
+      apiRequest({
+        method: 'POST',
+        url: '/properties/upload-images',
+        data: formData,
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      }),
+      
+    getPropertyTypes: () => 
+      apiRequest({
+        method: 'GET',
+        url: '/properties/property-types',
+      }),
+      
+    getTransactionTypes: () => 
+      apiRequest({
+        method: 'GET',
+        url: '/properties/transaction-types',
+      }),
+      
+    getCities: () => 
+      apiRequest({
+        method: 'GET',
+        url: '/properties/cities',
+      }),
+      
+    getDistrictsByCityId: (cityId: number) => 
+      apiRequest({
+        method: 'GET',
+        url: `/properties/cities/${cityId}/districts`,
+      }),
+      
+    getMetroStationsByCityId: (cityId: number) => 
+      apiRequest({
+        method: 'GET',
+        url: `/properties/cities/${cityId}/metro`,
+      }),
   },
   
   // Chat/Messages
@@ -165,10 +211,11 @@ export const api = {
         url: '/chat/conversations',
       }),
       
-    getPropertyMessages: (propertyId: number) => 
+    getPropertyMessages: (propertyId: number, userId?: number) => 
       apiRequest({
         method: 'GET',
         url: `/chat/properties/${propertyId}/messages`,
+        params: userId ? { userId } : undefined,
       }),
       
     sendMessage: (data: { content: string; recipient_id: number; property_id?: number }) => 

@@ -37,6 +37,14 @@ const MessageView: React.FC<MessageViewProps> = ({ conversation, onConversationU
           return;
         }
         
+        // Check if this is a self-conversation
+        if (conversation.user.id === user.id) {
+          setLoading(false);
+          setError('Невозможно вести чат с самим собой');
+          setMessages([]);
+          return;
+        }
+        
         try {
           setLoading(true);
           setError(null);
@@ -51,6 +59,11 @@ const MessageView: React.FC<MessageViewProps> = ({ conversation, onConversationU
             
             console.log('Messages loaded:', data);
             setMessages(data);
+            
+            // If no messages found
+            if (data.length === 0) {
+              setError(null); // Clear error, this is normal for new conversations
+            }
           } else {
             // Если нет property_id, это прямой чат между пользователями
             console.log('Fetching direct messages with user ID:', conversation.user.id);
@@ -93,6 +106,11 @@ const MessageView: React.FC<MessageViewProps> = ({ conversation, onConversationU
       
       if (!conversation.property?.id) {
         throw new Error('Нельзя отправить сообщение без привязки к объекту недвижимости');
+      }
+      
+      // Prevent sending messages to oneself
+      if (conversation.user.id === user.id) {
+        throw new Error('Нельзя отправить сообщение самому себе');
       }
       
       console.log('Sending message to:', conversation.user.id, 'for property:', conversation.property.id);
@@ -146,11 +164,13 @@ const MessageView: React.FC<MessageViewProps> = ({ conversation, onConversationU
       {/* Conversation header */}
       <div className="chat-header p-3 border-bottom">
         <h5 className="mb-0">
-          {getFirstName(conversation.user)} {getLastName(conversation.user)}
+          {conversation.user.id === user?.id 
+            ? 'Нет получателя (ошибка адресации)' 
+            : `${getFirstName(conversation.user)} ${getLastName(conversation.user)}`.trim() || 'Неизвестный пользователь'}
         </h5>
         {conversation.property && (
           <small className="text-muted">
-            Объект: {conversation.property.title}
+            Объект: {conversation.property.title || `ID: ${conversation.property.id}`}
           </small>
         )}
       </div>
@@ -172,6 +192,15 @@ const MessageView: React.FC<MessageViewProps> = ({ conversation, onConversationU
           messages.map((message) => {
             const isFromCurrentUser = message.sender_id === user?.id;
             
+            // Debug message data during render
+            console.log(`Rendering message ${message.id}:`, {
+              sender: message.sender,
+              recipient: message.recipient,
+              isFromCurrentUser,
+              sender_id: message.sender_id,
+              current_user_id: user?.id
+            });
+            
             return (
               <div 
                 key={message.id} 
@@ -192,6 +221,11 @@ const MessageView: React.FC<MessageViewProps> = ({ conversation, onConversationU
                     overflow: 'hidden'
                   }}
                 >
+                  {!isFromCurrentUser && (
+                    <div className="mb-1 small fw-bold">
+                      {getFirstName(message.sender)} {getLastName(message.sender)}
+                    </div>
+                  )}
                   <div style={{ overflow: 'hidden' }}>
                     {message.message}
                   </div>

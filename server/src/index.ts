@@ -6,6 +6,7 @@ import propertyRoutes from './routes/properties';
 import chatRoutes from './routes/chat';
 import { Router } from 'express';
 import config from './config';
+import path from 'path';
 
 const app = express();
 const port = config.port;
@@ -21,6 +22,10 @@ const corsOptions = {
 // Middleware
 app.use(cors(corsOptions));
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// Serve static files from the public directory
+app.use(express.static(path.join(__dirname, '../public')));
 
 // Log requests in development
 if (config.environment === 'development') {

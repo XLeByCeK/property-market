@@ -84,8 +84,16 @@ const transformConversations = (data: any[]): Conversation[] => {
       price: conv.property.price
     } : undefined;
     
-    // Determine the other user (not the current user)
-    const otherUser = normalizeUser(conv.sender || conv.recipient);
+    // Get the current user ID from localStorage
+    const currentUserId = JSON.parse(localStorage.getItem('user') || '{}')?.id;
+    
+    // Determine the other user in the conversation (not the current user)
+    let otherUser;
+    if (conv.sender_id === currentUserId) {
+      otherUser = normalizeUser(conv.recipient);
+    } else {
+      otherUser = normalizeUser(conv.sender);
+    }
     
     // Create a message object from the conversation
     const message: Message = {
@@ -129,18 +137,43 @@ export const getMessages = async (userId: number, propertyId?: number): Promise<
       throw new Error('Property ID is required');
     }
     
-    const data = await api.chat.getPropertyMessages(propertyId) as Message[];
+    console.log('Fetching messages for property ID', propertyId, 'with user ID', userId);
+    
+    const data = await api.chat.getPropertyMessages(propertyId, userId) as Message[];
     console.log('Fetched messages data for property ID', propertyId, ':', data);
     
+    // Debug user data before normalization
+    data.forEach((message, index) => {
+      console.log(`Message ${index}:`, {
+        id: message.id,
+        sender: message.sender,
+        recipient: message.recipient,
+        message: message.message.substring(0, 20) + (message.message.length > 20 ? '...' : '')
+      });
+    });
+    
     // Normalize user data in messages
-    return data.map(message => ({
-      ...message,
-      sender: message.sender ? normalizeUser(message.sender) : undefined,
-      recipient: message.recipient ? normalizeUser(message.recipient) : undefined
-    }));
+    const normalizedMessages = data.map(message => {
+      const normalizedMessage = {
+        ...message,
+        sender: message.sender ? normalizeUser(message.sender) : undefined,
+        recipient: message.recipient ? normalizeUser(message.recipient) : undefined
+      };
+      
+      // Debug after normalization
+      console.log(`Normalized message ${message.id}:`, {
+        sender: normalizedMessage.sender,
+        recipient: normalizedMessage.recipient
+      });
+      
+      return normalizedMessage;
+    });
+    
+    return normalizedMessages;
   } catch (error) {
     console.error('Error fetching messages:', error);
-    throw error;
+    // В случае ошибки возвращаем пустой массив
+    return [];
   }
 };
 

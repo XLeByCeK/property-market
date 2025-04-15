@@ -18,7 +18,12 @@ const ChatComponent: React.FC = () => {
         console.log('Fetching conversations...');
         const data = await getConversations();
         console.log('Conversations loaded:', data);
-        setConversations(data);
+        
+        // Filter out self-conversations where user.id matches current user id
+        const filtered = data.filter(conv => conv.user.id !== user?.id);
+        console.log('After filtering out self-conversations:', filtered);
+        
+        setConversations(filtered);
         setLoading(false);
       } catch (err: any) {
         console.error('Failed to load conversations:', err);
