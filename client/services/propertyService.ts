@@ -1,4 +1,5 @@
 import axios from 'axios';
+import api from './api';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
@@ -11,8 +12,8 @@ const getAuthHeader = () => {
   return {};
 };
 
-// Interface for property details
-export interface PropertyDetails {
+// Interface for property from API
+export interface PropertyFromAPI {
   id: number;
   title: string;
   description: string;
@@ -23,9 +24,29 @@ export interface PropertyDetails {
   total_floors?: number;
   address: string;
   year_built?: number;
+  status: string;
+  is_new_building: boolean;
+  is_commercial: boolean;
+  is_country: boolean;
+  created_at: string;
+  updated_at: string;
+  property_type_id: number;
+  transaction_type_id: number;
+  user_id: number;
+  city_id: number;
+  district_id?: number;
+  metro_id?: number;
+  metro_distance?: number;
+  user: {
+    id: number;
+    first_name: string;
+    last_name: string;
+    phone?: string;
+  };
   property_type: {
     id: number;
     name: string;
+    description?: string;
   };
   transaction_type: {
     id: number;
@@ -34,6 +55,8 @@ export interface PropertyDetails {
   city: {
     id: number;
     name: string;
+    region?: string;
+    country?: string;
   };
   district?: {
     id: number;
@@ -42,43 +65,38 @@ export interface PropertyDetails {
   metro_station?: {
     id: number;
     name: string;
-    color: string;
+    line?: string;
+    color?: string;
   };
-  metro_distance?: number;
-  is_new_building: boolean;
-  is_commercial: boolean;
-  is_country: boolean;
-  user: {
-    id: number;
-    first_name: string;
-    last_name: string;
-    phone: string;
-  };
-  images: Array<{
+  images: {
     id: number;
     image_url: string;
     is_main: boolean;
     order: number;
-  }>;
-  created_at: string;
-  updated_at: string;
+  }[];
+}
+
+// Interface for property representation in UI
+export interface Property {
+  id: string;
+  image: string;
+  price: number;
+  propertyType: string;
+  rooms: string;
+  floors: string;
+  address: string;
+  metro: string;
+  isNewBuilding: boolean;
+  isCommercial: boolean;
+  isForRent: boolean;
+  description: string;
 }
 
 // Get property by ID
-export const getPropertyById = async (id: string | number): Promise<PropertyDetails> => {
+export const getPropertyById = async (id: string | number): Promise<PropertyFromAPI> => {
   try {
-    // Skip real API call in development mode
-    if (process.env.NODE_ENV === 'development') {
-      console.log('Development mode: Skipping real API call');
-      // Return a rejected promise instead of throwing an error directly
-      return Promise.reject({
-        isDevModeSkip: true,
-        message: 'Skipping API call in development'
-      });
-    }
-    
-    const response = await axios.get(`${API_URL}/properties/${id}`);
-    return response.data;
+    const response = await api.properties.getById(id) as PropertyFromAPI;
+    return response;
   } catch (error) {
     console.error('Error fetching property details:', error);
     throw error;
@@ -94,5 +112,114 @@ export const toggleFavorite = async (propertyId: string | number): Promise<void>
   } catch (error) {
     console.error('Error toggling favorite status:', error);
     throw error;
+  }
+};
+
+/**
+ * Преобразует данные с API в формат для отображения в UI
+ */
+export const mapPropertyFromAPI = (property: PropertyFromAPI): Property => {
+  // Основное изображение или заглушка, если нет изображений
+  const mainImage = property.images.find(img => img.is_main)?.image_url || 
+                    property.images[0]?.image_url || 
+                    '/images/null-image.jpg';
+  
+  // Определение типа комнат
+  let roomsText = '';
+  if (property.rooms === 0) {
+    roomsText = 'Студия';
+  } else {
+    roomsText = `${property.rooms} комн.`;
+  }
+  
+  // Определение этажности
+  let floorsText = '';
+  if (property.floor && property.total_floors) {
+    floorsText = `${property.floor}/${property.total_floors} эт.`;
+  } else if (property.floor) {
+    floorsText = `${property.floor} эт.`;
+  } else if (property.total_floors) {
+    floorsText = `${property.total_floors} эт.`;
+  }
+  
+  // Определение метро
+  const metroName = property.metro_station?.name || '';
+  
+  // Определяем, является ли объект арендным
+  const isForRent = property.transaction_type.name.toLowerCase().includes('аренд') || 
+                    property.description.toLowerCase().includes('аренд') ||
+                    property.description.toLowerCase().includes('снять') ||
+                    property.description.toLowerCase().includes('сдать') ||
+                    property.description.toLowerCase().includes('rent');
+  
+  return {
+    id: property.id.toString(),
+    image: mainImage,
+    price: property.price,
+    propertyType: property.property_type.name,
+    rooms: roomsText,
+    floors: floorsText,
+    address: property.address,
+    metro: metroName,
+    isNewBuilding: property.is_new_building,
+    isCommercial: property.is_commercial,
+    isForRent: isForRent,
+    description: property.description
+  };
+};
+
+/**
+ * Получает все объекты недвижимости с сервера
+ */
+export const getAllProperties = async (): Promise<Property[]> => {
+  try {
+    const data = await api.properties.getAll() as PropertyFromAPI[];
+    return data.map(mapPropertyFromAPI);
+  } catch (error) {
+    console.error('Error fetching properties:', error);
+    // Возвращаем пустой массив вместо ошибки
+    return [];
+  }
+};
+
+/**
+ * Получает новостройки 
+ */
+export const getNewBuildings = async (limit = 8): Promise<Property[]> => {
+  try {
+    const data = await api.properties.getNewBuildings(limit) as PropertyFromAPI[];
+    return data.map(mapPropertyFromAPI);
+  } catch (error) {
+    console.error('Error fetching new buildings:', error);
+    // Возвращаем пустой массив вместо ошибки
+    return [];
+  }
+};
+
+/**
+ * Получает объекты для покупки
+ */
+export const getPropertiesForSale = async (limit = 8): Promise<Property[]> => {
+  try {
+    const data = await api.properties.getForSale(limit) as PropertyFromAPI[];
+    return data.map(mapPropertyFromAPI);
+  } catch (error) {
+    console.error('Error fetching properties for sale:', error);
+    // Возвращаем пустой массив вместо ошибки
+    return [];
+  }
+};
+
+/**
+ * Получает объекты для аренды
+ */
+export const getPropertiesForRent = async (limit = 8): Promise<Property[]> => {
+  try {
+    const data = await api.properties.getForRent(limit) as PropertyFromAPI[];
+    return data.map(mapPropertyFromAPI);
+  } catch (error) {
+    console.error('Error fetching properties for rent:', error);
+    // Возвращаем пустой массив вместо ошибки
+    return [];
   }
 }; 

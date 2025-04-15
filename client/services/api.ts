@@ -115,6 +115,27 @@ export const api = {
         url: `/properties/${id}`,
       }),
       
+    getNewBuildings: (limit?: number) => 
+      apiRequest({
+        method: 'GET',
+        url: '/properties/new-buildings',
+        params: { limit },
+      }),
+      
+    getForSale: (limit?: number) => 
+      apiRequest({
+        method: 'GET',
+        url: '/properties/for-sale',
+        params: { limit },
+      }),
+      
+    getForRent: (limit?: number) => 
+      apiRequest({
+        method: 'GET',
+        url: '/properties/for-rent',
+        params: { limit },
+      }),
+      
     create: (propertyData: any) => 
       apiRequest({
         method: 'POST',

@@ -42,6 +42,31 @@ const ConversationsList: React.FC<ConversationsListProps> = ({
     return (firstName.charAt(0) + lastName.charAt(0)).toUpperCase();
   };
 
+  // Получение заголовка чата
+  const getChatTitle = (conversation: Conversation) => {
+    // Если есть информация о свойстве, используем его заголовок
+    if (conversation.property && conversation.property.title) {
+      return conversation.property.title;
+    }
+    
+    // Если есть ID свойства, но нет заголовка
+    if (conversation.property && conversation.property.id) {
+      return `Объект №${conversation.property.id}`;
+    }
+    
+    // Если нет свойства, используем имя пользователя
+    const firstName = getFirstName(conversation.user);
+    const lastName = getLastName(conversation.user);
+    const userName = `${firstName} ${lastName}`.trim();
+    
+    if (userName) {
+      return `Чат с ${userName}`;
+    }
+    
+    // Если нет ни свойства, ни имени пользователя
+    return `Чат №${conversation.user.id}`;
+  };
+
   return (
     <div className="conversation-list">
       {conversations.map((conversation) => (
@@ -72,17 +97,19 @@ const ConversationsList: React.FC<ConversationsListProps> = ({
               </div>
               {conversation.property && (
                 <small className="text-muted d-block">
-                  Объект: {conversation.property.title}
+                  {getChatTitle(conversation)}
                 </small>
               )}
-              <p className="mb-0 text-truncate" style={{ maxWidth: '200px' }}>
-                {conversation.lastMessage ? conversation.lastMessage.message : 'Нет сообщений'}
-              </p>
-              {conversation.unreadCount > 0 && (
-                <span className="badge bg-primary rounded-pill">
-                  {conversation.unreadCount}
-                </span>
-              )}
+              <div className="d-flex justify-content-between align-items-center mt-1">
+                <p className="mb-0 text-truncate" style={{ maxWidth: '200px' }}>
+                  {conversation.lastMessage ? conversation.lastMessage.message : 'Нет сообщений'}
+                </p>
+                {conversation.unreadCount > 0 && (
+                  <span className="badge bg-primary rounded-pill ms-2">
+                    {conversation.unreadCount}
+                  </span>
+                )}
+              </div>
             </div>
           </div>
         </div>

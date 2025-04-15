@@ -46,6 +46,11 @@ export const UserMenu = () => {
     }
   };
 
+  const handleMessagesClick = () => {
+    closeUserMenu();
+    router.push('/messages');
+  };
+
   const handleLogoutClick = async () => {
     await logout();
     closeUserMenu();
@@ -101,7 +106,7 @@ export const UserMenu = () => {
                   className="object-cover rounded-circle"
                 />
               </div>
-              <h5 className="mb-0">{isAuthenticated ? `${user?.first_name || ''} ${user?.last_name || ''}` : 'Профиль'}</h5>
+              <h5 className="mb-0">{isAuthenticated ? `${user?.firstName || ''} ${user?.lastName || ''}` : 'Профиль'}</h5>
             </div>
             <button className="close-button" onClick={closeUserMenu}>
               <svg className="icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -112,6 +117,12 @@ export const UserMenu = () => {
           <div className="mobile-menu-content">
             <button className="menu-item" onClick={handleProfileClick}>
               {isAuthenticated ? 'Профиль' : 'Личный кабинет'}
+            </button>
+            <button className="menu-item" onClick={handleMessagesClick}>
+              Сообщения
+              {isAuthenticated && (
+                <span className="badge bg-primary rounded-pill ms-2">Новые</span>
+              )}
             </button>
             {isAuthenticated && (
               <button className="menu-item" onClick={closeUserMenu}>Настройки</button>

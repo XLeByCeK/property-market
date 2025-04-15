@@ -31,24 +31,32 @@ const MessageView: React.FC<MessageViewProps> = ({ conversation, onConversationU
       setActiveConversationId(currentConversationId);
       
       const fetchMessages = async () => {
-        if (!user || !conversation.property?.id) {
+        if (!user) {
           setLoading(false);
-          setError('Нет данных об объекте недвижимости');
+          setError('Необходима авторизация');
           return;
         }
         
         try {
           setLoading(true);
           setError(null);
-          console.log('Fetching messages for property ID:', conversation.property.id);
           
-          const data = await getMessages(
-            conversation.user.id,
-            conversation.property.id
-          );
-          
-          console.log('Messages loaded:', data);
-          setMessages(data);
+          if (conversation.property?.id) {
+            console.log('Fetching messages for property ID:', conversation.property.id);
+            
+            const data = await getMessages(
+              conversation.user.id,
+              conversation.property.id
+            );
+            
+            console.log('Messages loaded:', data);
+            setMessages(data);
+          } else {
+            // Если нет property_id, это прямой чат между пользователями
+            console.log('Fetching direct messages with user ID:', conversation.user.id);
+            setMessages([]); // В текущей реализации нет прямых сообщений
+            setError('Прямые сообщения не поддерживаются');
+          }
           
           // Handle unread messages if needed
           onConversationUpdate({
@@ -83,11 +91,15 @@ const MessageView: React.FC<MessageViewProps> = ({ conversation, onConversationU
       setSending(true);
       setError(null);
       
-      console.log('Sending message to:', conversation.user.id);
+      if (!conversation.property?.id) {
+        throw new Error('Нельзя отправить сообщение без привязки к объекту недвижимости');
+      }
+      
+      console.log('Sending message to:', conversation.user.id, 'for property:', conversation.property.id);
       const sentMessage = await sendMessage(
         conversation.user.id,
         newMessage,
-        conversation.property?.id
+        conversation.property.id
       );
       
       console.log('Message sent:', sentMessage);

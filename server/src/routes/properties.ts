@@ -34,6 +34,8 @@ type UpdatePropertyRequest = Partial<CreatePropertyRequest> & {
 // Get all properties
 router.get('/', async (req, res) => {
   try {
+    const limit = req.query.limit ? parseInt(req.query.limit as string) : undefined;
+    
     const properties = await prisma.property.findMany({
       where: {
         status: 'active',
@@ -54,11 +56,192 @@ router.get('/', async (req, res) => {
         metro_station: true,
         images: true,
       },
+      take: limit,
     });
     res.json(properties);
   } catch (error) {
     console.error('Error fetching properties:', error);
     res.status(500).json({ error: 'Failed to fetch properties' });
+  }
+});
+
+// Get new buildings (is_new_building = true, status = active, is_commercial = false)
+router.get('/new-buildings', async (req, res) => {
+  try {
+    const limit = req.query.limit ? parseInt(req.query.limit as string) : undefined;
+    
+    const properties = await prisma.property.findMany({
+      where: {
+        status: 'active',
+        is_new_building: true,
+        is_commercial: false,
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            first_name: true,
+            last_name: true,
+            phone: true,
+          },
+        },
+        property_type: true,
+        transaction_type: true,
+        city: true,
+        district: true,
+        metro_station: true,
+        images: true,
+      },
+      take: limit,
+    });
+    res.json(properties);
+  } catch (error) {
+    console.error('Error fetching new buildings:', error);
+    res.status(500).json({ error: 'Failed to fetch new buildings' });
+  }
+});
+
+// Get properties for sale (status = active, transaction_type.name = 'Продажа')
+router.get('/for-sale', async (req, res) => {
+  try {
+    const limit = req.query.limit ? parseInt(req.query.limit as string) : undefined;
+    
+    const properties = await prisma.property.findMany({
+      where: {
+        status: 'active',
+        transaction_type: {
+          name: {
+            contains: 'Продажа',
+            mode: 'insensitive',
+          },
+        },
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            first_name: true,
+            last_name: true,
+            phone: true,
+          },
+        },
+        property_type: true,
+        transaction_type: true,
+        city: true,
+        district: true,
+        metro_station: true,
+        images: true,
+      },
+      take: limit,
+      orderBy: {
+        created_at: 'desc'
+      }
+    });
+    res.json(properties);
+  } catch (error) {
+    console.error('Error fetching properties for sale:', error);
+    res.status(500).json({ error: 'Failed to fetch properties for sale' });
+  }
+});
+
+// Get properties for rent (status = active, transaction_type.name содержит 'Аренда')
+router.get('/for-rent', async (req, res) => {
+  try {
+    const limit = req.query.limit ? parseInt(req.query.limit as string) : undefined;
+    
+    const properties = await prisma.property.findMany({
+      where: {
+        status: 'active',
+        transaction_type: {
+          name: {
+            contains: 'Аренда',
+            mode: 'insensitive',
+          },
+        },
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            first_name: true,
+            last_name: true,
+            phone: true,
+          },
+        },
+        property_type: true,
+        transaction_type: true,
+        city: true,
+        district: true,
+        metro_station: true,
+        images: true,
+      },
+      take: limit,
+      orderBy: {
+        created_at: 'desc'
+      }
+    });
+    
+    // Если результаты пустые, попробуем искать по ключевым словам в описании
+    if (properties.length === 0) {
+      const propertiesByDescription = await prisma.property.findMany({
+        where: {
+          status: 'active',
+          OR: [
+            {
+              description: {
+                contains: 'аренд',
+                mode: 'insensitive'
+              }
+            },
+            {
+              description: {
+                contains: 'снять',
+                mode: 'insensitive'
+              }
+            },
+            {
+              description: {
+                contains: 'сдать',
+                mode: 'insensitive'
+              }
+            },
+            {
+              description: {
+                contains: 'rent',
+                mode: 'insensitive'
+              }
+            }
+          ]
+        },
+        include: {
+          user: {
+            select: {
+              id: true,
+              first_name: true,
+              last_name: true,
+              phone: true,
+            },
+          },
+          property_type: true,
+          transaction_type: true,
+          city: true,
+          district: true,
+          metro_station: true,
+          images: true,
+        },
+        take: limit,
+        orderBy: {
+          created_at: 'desc'
+        }
+      });
+      
+      return res.json(propertiesByDescription);
+    }
+    
+    res.json(properties);
+  } catch (error) {
+    console.error('Error fetching properties for rent:', error);
+    res.status(500).json({ error: 'Failed to fetch properties for rent' });
   }
 });
 
