@@ -1758,6 +1758,7 @@ body {
   color: #333;
   background-color: #f5f5f5;
   transition: all 0.3s ease;
+  margin-right: 15px;
 }
 
 .back-button:hover {
@@ -1776,6 +1777,7 @@ body {
   margin-bottom: 2rem;
   padding: 1rem 0;
   border-bottom: 1px solid #eaeaea;
+  justify-content: flex-start;
 }
 
 .category-header h1 {

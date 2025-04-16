@@ -81,7 +81,7 @@ const CategoryPage = () => {
         />
       </Head>
       
-      <div className="container mt-4">
+      <div className="container mt-5 pt-4">
         <div className="category-header d-flex align-items-center mb-4">
           <Link href="/" className="back-button me-3">
             <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor">
