@@ -1773,11 +1773,9 @@ body {
 
 .category-header {
   display: flex;
+  justify-content: space-between;
   align-items: center;
-  margin-bottom: 2rem;
-  padding: 1rem 0;
-  border-bottom: 1px solid #eaeaea;
-  justify-content: flex-start;
+  margin-bottom: 1.5rem;
 }
 
 .category-header h1 {
@@ -1808,5 +1806,37 @@ body {
   }
   100% {
     transform: rotate(360deg);
+  }
+}
+
+/* Category detail page styles */
+.category-detail-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 2rem;
+  padding: 1rem 0;
+  border-bottom: 1px solid #eaeaea;
+  justify-content: flex-start;
+}
+
+.category-detail-header h1 {
+  font-size: 2rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+@media (max-width: 768px) {
+  .category-detail-header h1 {
+    font-size: 1.5rem;
+  }
+  
+  .back-button {
+    width: 36px;
+    height: 36px;
+  }
+  
+  .back-button svg {
+    width: 20px;
+    height: 20px;
   }
 } 
