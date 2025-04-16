@@ -30,17 +30,25 @@ const PropertyPage = () => {
         
         // Try to fetch from API
         try {
-          const data = await getPropertyById(propertyId);
-          setProperty(data);
+          const data = await getPropertyById(Number(propertyId)) as PropertyDetails;
           
-          // In a real app, we would get coordinates from the API
-          setCoordinates({
-            lat: 55.753215 + (Math.random() * 0.1 - 0.05),
-            lng: 37.622504 + (Math.random() * 0.1 - 0.05)
-          });
+          if (data) {
+            setProperty(data);
+            
+            // In a real app, we would get coordinates from the API
+            setCoordinates({
+              lat: 55.753215 + (Math.random() * 0.1 - 0.05),
+              lng: 37.622504 + (Math.random() * 0.1 - 0.05)
+            });
+          } else {
+            throw new Error('Property data is empty');
+          }
         } catch (apiError: any) {
-          // If in development or explicitly skipping API, immediately load mock data
-          if (process.env.NODE_ENV === 'development' || (apiError && apiError.isDevModeSkip)) {
+          console.error('API error:', apiError);
+          
+          // If in development mode, load mock data
+          if (process.env.NODE_ENV === 'development') {
+            console.log('Loading mock data in development mode');
             loadMockData(propertyId);
           } else {
             // In production, show the error
@@ -51,10 +59,8 @@ const PropertyPage = () => {
         console.error('Failed to fetch property details:', err);
         setError('Не удалось загрузить данные об объекте недвижимости');
       } finally {
-        // Don't set loading to false here if we're loading mock data
-        if (!(process.env.NODE_ENV === 'development' && !property)) {
-          setLoading(false);
-        }
+        // Always set loading to false regardless of result
+        setLoading(false);
       }
     };
     

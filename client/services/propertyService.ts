@@ -1,7 +1,7 @@
 import axios from 'axios';
 import api from './api';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
 
 // Helper function to get auth header
 const getAuthHeader = () => {
@@ -67,6 +67,59 @@ export interface PropertyFromAPI {
     name: string;
     line?: string;
     color?: string;
+  };
+  images: {
+    id: number;
+    image_url: string;
+    is_main: boolean;
+    order: number;
+  }[];
+}
+
+// Interface for property details (used in property detail page)
+export interface PropertyDetails {
+  id: number;
+  title: string;
+  description: string;
+  price: number;
+  area: number;
+  rooms: number;
+  floor?: number;
+  total_floors?: number;
+  address: string;
+  year_built?: number;
+  is_new_building: boolean;
+  is_commercial: boolean;
+  is_country: boolean;
+  created_at: string;
+  updated_at: string;
+  property_type: {
+    id: number;
+    name: string;
+  };
+  transaction_type: {
+    id: number;
+    name: string;
+  };
+  city: {
+    id: number;
+    name: string;
+  };
+  district?: {
+    id: number;
+    name: string;
+  };
+  metro_station?: {
+    id: number;
+    name: string;
+    color?: string;
+  };
+  metro_distance?: number;
+  user: {
+    id: number;
+    first_name: string;
+    last_name: string;
+    phone?: string;
   };
   images: {
     id: number;
