@@ -3,6 +3,7 @@ import { useRouter } from 'next/router';
 import { useAuth } from '../../context/AuthContext';
 import { AuthModal } from '../auth/AuthModal';
 import { PropertyDetails } from '../../services/propertyService';
+import { sendMessage } from '../../services/chatService';
 
 interface PropertyContactCardProps {
   property: PropertyDetails;
@@ -12,7 +13,9 @@ export const PropertyContactCard: React.FC<PropertyContactCardProps> = ({ proper
   const [isFavorite, setIsFavorite] = useState(false);
   const [phoneVisible, setPhoneVisible] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
-  const { isAuthenticated } = useAuth();
+  const [isSelfMessageModalOpen, setIsSelfMessageModalOpen] = useState(false);
+  const [isSending, setIsSending] = useState(false);
+  const { isAuthenticated, user } = useAuth();
   const router = useRouter();
   
   // Format price like 1000000 -> 1 000 000
@@ -36,14 +39,38 @@ export const PropertyContactCard: React.FC<PropertyContactCardProps> = ({ proper
     setPhoneVisible(true);
   };
   
-  const handleContactSeller = () => {
+  const handleContactSeller = async () => {
     if (!isAuthenticated) {
       setIsAuthModalOpen(true);
       return;
     }
     
-    // Navigate to messages with this property and seller
-    router.push(`/messages?userId=${property.user.id}&propertyId=${property.id}`);
+    // Check if user is trying to contact themselves (their own property)
+    if (user && user.id === property.user.id) {
+      setIsSelfMessageModalOpen(true);
+      return;
+    }
+    
+    try {
+      setIsSending(true);
+      
+      // Try to create a new conversation by sending the first message
+      // This will be ignored if a conversation already exists
+      await sendMessage(
+        property.user.id, 
+        `Здравствуйте! Меня интересует ваше объявление: ${property.title}`, 
+        property.id
+      );
+      
+      // After sending the message or if it already exists, navigate to the messages page
+      router.push(`/messages?userId=${property.user.id}&propertyId=${property.id}`);
+    } catch (error) {
+      console.error('Error contacting seller:', error);
+      // Navigate anyway, the message page will handle the error state
+      router.push(`/messages?userId=${property.user.id}&propertyId=${property.id}`);
+    } finally {
+      setIsSending(false);
+    }
   };
   
   return (
@@ -83,19 +110,41 @@ export const PropertyContactCard: React.FC<PropertyContactCardProps> = ({ proper
           <button 
             className="contact-card-button message-button"
             onClick={handleContactSeller}
+            disabled={isSending}
           >
             <svg className="button-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
             </svg>
-            <span>Написать</span>
+            <span>
+              {isSending ? 'Переход...' : 'Написать'}
+            </span>
           </button>
         </div>
       </div>
       
+      {/* Modal for unauthorized users */}
       <AuthModal
         isOpen={isAuthModalOpen}
         onClose={() => setIsAuthModalOpen(false)}
       />
+      
+      {/* Modal for trying to message own property */}
+      {isSelfMessageModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md mx-auto">
+            <h3 className="text-xl font-semibold mb-4">Невозможно отправить сообщение</h3>
+            <p className="mb-4">Это ваше объявление. Вы не можете написать сообщение самому себе.</p>
+            <div className="flex justify-end">
+              <button 
+                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                onClick={() => setIsSelfMessageModalOpen(false)}
+              >
+                Понятно
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }; 
