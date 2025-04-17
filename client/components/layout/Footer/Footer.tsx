@@ -27,7 +27,7 @@ export const Footer = () => {
             <h6>Сервисы</h6>
             <ul className="list-unstyled">
               <li><Link href="/search" className="text-decoration-none text-muted">Поиск недвижимости</Link></li>
-              <li><Link href="/add-property" className="text-decoration-none text-muted">Разместить объявление</Link></li>
+              <li><Link href="/property/create" className="text-decoration-none text-muted">Разместить объявление</Link></li>
               <li><Link href="/services" className="text-decoration-none text-muted">Дополнительные услуги</Link></li>
             </ul>
           </div>

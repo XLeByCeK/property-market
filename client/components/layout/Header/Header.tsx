@@ -89,9 +89,9 @@ export const Header = () => {
             </Link>
 
             {/* Post Ad Button */}
-            <button className="post-ad-button d-none d-sm-block">
+            <Link href="/property/create" className="post-ad-button d-none d-sm-block">
               Разместить объявление
-            </button>
+            </Link>
 
             {/* About House */}
             <button className="about-house-button d-none d-lg-block">
