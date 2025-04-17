@@ -20,51 +20,28 @@ const PropertyPage = () => {
   const [coordinates, setCoordinates] = useState({ lat: 55.753215, lng: 37.622504 }); // Moscow center by default
   
   useEffect(() => {
-    const fetchProperty = async () => {
+    const fetchPropertyData = async () => {
       if (!id) return;
       
+      setLoading(true);
       try {
-        setLoading(true);
         // Handle the case where id could be an array
         const propertyId = Array.isArray(id) ? id[0] : id;
         
-        // Try to fetch from API
-        try {
-          const data = await getPropertyById(Number(propertyId)) as PropertyDetails;
-          
-          if (data) {
-            setProperty(data);
-            
-            // In a real app, we would get coordinates from the API
-            setCoordinates({
-              lat: 55.753215 + (Math.random() * 0.1 - 0.05),
-              lng: 37.622504 + (Math.random() * 0.1 - 0.05)
-            });
-          } else {
-            throw new Error('Property data is empty');
-          }
-        } catch (apiError: any) {
-          console.error('API error:', apiError);
-          
-          // If in development mode, load mock data
-          if (process.env.NODE_ENV === 'development') {
-            console.log('Loading mock data in development mode');
-            loadMockData(propertyId);
-          } else {
-            // In production, show the error
-            throw apiError;
-          }
-        }
-      } catch (err) {
-        console.error('Failed to fetch property details:', err);
-        setError('Не удалось загрузить данные об объекте недвижимости');
+        const propertyData = await getPropertyById(Number(propertyId)) as PropertyDetails;
+        setProperty(propertyData);
+        
+        // Also fetch additional data like property features, etc.
+        
+      } catch (error) {
+        console.error('Error fetching property details:', error);
+        setError('Failed to load property details');
       } finally {
-        // Always set loading to false regardless of result
         setLoading(false);
       }
     };
     
-    fetchProperty();
+    fetchPropertyData();
   }, [id]);
   
   // Extracted the mock data creation to a separate function

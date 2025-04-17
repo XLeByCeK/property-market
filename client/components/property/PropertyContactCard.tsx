@@ -1,16 +1,17 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { useAuth } from '../../context/AuthContext';
 import { AuthModal } from '../auth/AuthModal';
-import { PropertyDetails } from '../../services/propertyService';
+import axios from 'axios';
 import { sendMessage } from '../../services/chatService';
 
 interface PropertyContactCardProps {
-  property: PropertyDetails;
+  property: any; // Using any type to avoid issues with favorites field which is not in the PropertyDetails interface
 }
 
 export const PropertyContactCard: React.FC<PropertyContactCardProps> = ({ property }) => {
   const [isFavorite, setIsFavorite] = useState(false);
+  const [isToggling, setIsToggling] = useState(false);
   const [phoneVisible, setPhoneVisible] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isSelfMessageModalOpen, setIsSelfMessageModalOpen] = useState(false);
@@ -18,17 +19,86 @@ export const PropertyContactCard: React.FC<PropertyContactCardProps> = ({ proper
   const { isAuthenticated, user } = useAuth();
   const router = useRouter();
   
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+  
   // Format price like 1000000 -> 1 000 000
   const formatPrice = (price: number) => {
     return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
   };
   
-  const toggleFavorite = () => {
+  // Check if the property is in user's favorites - simplified
+  useEffect(() => {
+    if (isAuthenticated && property?.favorites && user) {
+      const isPropertyFavorited = property.favorites.some(
+        (fav: any) => fav.user_id === user.id
+      );
+      setIsFavorite(isPropertyFavorited);
+    }
+  }, [isAuthenticated, property?.favorites, user]);
+  
+  const handleToggleFavorite = async () => {
+    console.log('Toggling favorite for property:', property?.id);
+    
     if (!isAuthenticated) {
+      console.log('User not authenticated, opening auth modal');
       setIsAuthModalOpen(true);
       return;
     }
-    setIsFavorite(!isFavorite);
+    
+    if (isToggling || !property?.id) {
+      console.log('Already toggling or invalid property ID');
+      return; // Prevent multiple clicks or invalid property
+    }
+    
+    try {
+      setIsToggling(true);
+      const numericId = typeof property.id === 'string' ? parseInt(property.id, 10) : property.id;
+      
+      // Ensure we have a valid number
+      if (isNaN(numericId)) {
+        console.error('Invalid property ID:', property.id);
+        return;
+      }
+      
+      console.log('Making API call to toggle favorite for ID:', numericId);
+      
+      // Direct axios call
+      const token = localStorage.getItem('token');
+      if (!token) {
+        console.error('No authentication token found');
+        setIsAuthModalOpen(true);
+        return;
+      }
+      
+      const response = await axios.post(
+        `${API_URL}/properties/favorites/${numericId}`, 
+        {}, 
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          }
+        }
+      );
+      
+      console.log('Toggle favorite API call successful. Result:', response.data);
+      
+      // Update local state
+      setIsFavorite(!isFavorite);
+    } catch (error: any) {
+      console.error('Error toggling favorite status:', error);
+      if (error.response) {
+        console.error('Response status:', error.response.status);
+        console.error('Response data:', error.response.data);
+        
+        // If unauthorized, open auth modal
+        if (error.response.status === 401) {
+          setIsAuthModalOpen(true);
+        }
+      }
+    } finally {
+      setIsToggling(false);
+    }
   };
   
   const handleShowPhone = () => {
@@ -80,7 +150,9 @@ export const PropertyContactCard: React.FC<PropertyContactCardProps> = ({ proper
           <h2 className="contact-card-price">{formatPrice(property.price)} ₽</h2>
           <button 
             className={`favorite-button ${isFavorite ? 'active' : ''}`}
-            onClick={toggleFavorite}
+            onClick={handleToggleFavorite}
+            disabled={isToggling}
+            aria-label={isFavorite ? "Remove from favorites" : "Add to favorites"}
           >
             <svg className="heart-icon" fill={isFavorite ? "currentColor" : "none"} viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />

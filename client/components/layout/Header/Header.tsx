@@ -4,8 +4,11 @@ import Link from 'next/link';
 import { Navbar } from './Navbar';
 import { CitySelector } from './CitySelector';
 import { UserMenu } from './UserMenu';
+import { useAuth } from '../../../context/AuthContext';
 
 export const Header = () => {
+  const { isAuthenticated } = useAuth();
+  
   const handleHamburgerClick = () => {
     const mobileMenu = document.querySelector('.navbar-mobile');
     if (mobileMenu) {
@@ -70,11 +73,13 @@ export const Header = () => {
           {/* Right section */}
           <div className="nav-right">
             {/* Favorites */}
-            <button className="icon-button d-none d-md-block">
-              <svg className="icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-              </svg>
-            </button>
+            {isAuthenticated && (
+              <Link href="/favorites" className="icon-button d-none d-md-block">
+                <svg className="icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                </svg>
+              </Link>
+            )}
 
             {/* Messages */}
             <Link href="/messages" className="icon-button d-none d-md-block">

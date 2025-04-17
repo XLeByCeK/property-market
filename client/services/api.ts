@@ -46,6 +46,28 @@ apiClient.interceptors.response.use(
       });
     }
     
+    // Handle 401 Unauthorized errors (expired or invalid token)
+    if (response.status === 401 && typeof window !== 'undefined') {
+      console.warn('Authentication Error - Token expired or invalid');
+      
+      // Only clear tokens if they exist to avoid unnecessary operations
+      if (localStorage.getItem('token')) {
+        console.log('Clearing invalid auth tokens');
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        
+        // Don't redirect if already on login page or if the URL contains 'auth' to avoid redirect loops
+        const currentPath = window.location.pathname;
+        if (!currentPath.includes('/login') && !currentPath.includes('/auth')) {
+          // Add a small delay to allow for any current processes to complete
+          setTimeout(() => {
+            const returnUrl = encodeURIComponent(currentPath);
+            window.location.href = `/login?returnUrl=${returnUrl}`;
+          }, 100);
+        }
+      }
+    }
+    
     // Log detailed error info for debugging
     console.error('API Error Response:', {
       status: response.status,
@@ -200,6 +222,18 @@ export const api = {
       apiRequest({
         method: 'GET',
         url: `/properties/cities/${cityId}/metro`,
+      }),
+      
+    toggleFavorite: (propertyId: number) => 
+      apiRequest({
+        method: 'POST',
+        url: `/properties/favorites/${propertyId}`,
+      }),
+      
+    getFavorites: () => 
+      apiRequest({
+        method: 'GET',
+        url: '/properties/favorites',
       }),
   },
   

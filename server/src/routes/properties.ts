@@ -589,6 +589,110 @@ router.get('/property-types', async (req, res) => {
   }
 });
 
+// Toggle favorite status for a property
+router.post('/favorites/:propertyId', authenticateToken, async (req, res) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const propertyId = parseInt(req.params.propertyId);
+    if (isNaN(propertyId)) {
+      return res.status(400).json({ error: 'Invalid property ID' });
+    }
+
+    // Check if property exists
+    const property = await prisma.property.findUnique({
+      where: { id: propertyId },
+    });
+
+    if (!property) {
+      return res.status(404).json({ error: 'Property not found' });
+    }
+
+    // Check if the property is already in favorites
+    const existingFavorite = await prisma.favorite.findUnique({
+      where: {
+        user_id_property_id: {
+          user_id: req.user.id,
+          property_id: propertyId,
+        },
+      },
+    });
+
+    if (existingFavorite) {
+      // Remove from favorites
+      await prisma.favorite.delete({
+        where: {
+          user_id_property_id: {
+            user_id: req.user.id,
+            property_id: propertyId,
+          },
+        },
+      });
+      res.json({ message: 'Property removed from favorites', favorited: false });
+    } else {
+      // Add to favorites
+      await prisma.favorite.create({
+        data: {
+          user_id: req.user.id,
+          property_id: propertyId,
+        },
+      });
+      res.json({ message: 'Property added to favorites', favorited: true });
+    }
+  } catch (error) {
+    console.error('Error toggling favorite status:', error);
+    res.status(500).json({ error: 'Failed to update favorite status' });
+  }
+});
+
+// Get favorite properties for the current user
+router.get('/favorites', authenticateToken, async (req, res) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    // Get favorite properties for the user
+    const favoriteProperties = await prisma.favorite.findMany({
+      where: {
+        user_id: req.user.id,
+      },
+      include: {
+        property: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                first_name: true,
+                last_name: true,
+                phone: true,
+              },
+            },
+            property_type: true,
+            transaction_type: true,
+            city: true,
+            district: true,
+            metro_station: true,
+            images: true,
+          },
+        },
+      },
+      orderBy: {
+        created_at: 'desc',
+      },
+    });
+
+    // Extract just the property data
+    const properties = favoriteProperties.map(fav => fav.property);
+    res.json(properties);
+  } catch (error) {
+    console.error('Error fetching favorite properties:', error);
+    res.status(500).json({ error: 'Failed to fetch favorite properties' });
+  }
+});
+
 router.get('/transaction-types', async (req, res) => {
   try {
     const transactionTypes = await prisma.transaction_type.findMany({

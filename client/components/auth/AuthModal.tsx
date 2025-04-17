@@ -40,26 +40,66 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
     
     try {
       if (mode === 'login') {
+        console.log('Attempting to log in with:', formData.email);
+        
+        // Login won't throw errors anymore, it will just set the error state in AuthContext
         await login(formData.email, formData.password);
+        
+        // Check if there's an error in the context
+        if (error) {
+          console.log('Login failed with error:', error);
+          setFormError(error);
+          setIsSubmitting(false);
+          return;
+        }
+        
+        console.log('Login successful');
         onClose();
-        router.push('/profile');
+        
+        // Get the return URL from query parameters or go to profile
+        const returnUrl = new URLSearchParams(window.location.search).get('returnUrl');
+        router.push(returnUrl || '/profile');
       } else {
+        console.log('Attempting to register with:', formData.email);
         const registerData: RegisterData = {
           email: formData.email,
           password: formData.password,
           first_name: formData.first_name,
           last_name: formData.last_name,
+          firstName: formData.first_name,
+          lastName: formData.last_name,
           phone: formData.phone || undefined,
-          birth_date: formData.birth_date || undefined
+          birth_date: formData.birth_date || undefined,
+          birthDate: formData.birth_date || undefined
         };
         
+        // Register won't throw errors anymore, it will just set the error state in AuthContext
         await register(registerData);
+        
+        // Check if there's an error in the context
+        if (error) {
+          console.log('Registration failed with error:', error);
+          setFormError(error);
+          setIsSubmitting(false);
+          return;
+        }
+        
+        console.log('Registration successful');
         onClose();
-        router.push('/profile');
+        
+        // Get the return URL from query parameters or go to profile
+        const returnUrl = new URLSearchParams(window.location.search).get('returnUrl');
+        router.push(returnUrl || '/profile');
       }
-    } catch (err) {
+    } catch (err: any) {
+      // This catch block is mostly for network errors now
       console.error('Authentication error:', err);
-      setFormError(error || 'Произошла ошибка при обработке запроса');
+      
+      setFormError(
+        mode === 'login' 
+          ? 'Произошла ошибка соединения. Пожалуйста, проверьте интернет-соединение.'
+          : 'Произошла ошибка соединения. Пожалуйста, проверьте интернет-соединение.'
+      );
     } finally {
       setIsSubmitting(false);
     }
