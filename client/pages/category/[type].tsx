@@ -4,9 +4,9 @@ import Link from 'next/link';
 import Head from 'next/head';
 import { Layout } from '../../components/layout/Layout';
 import { PropertyCard } from '../../components/card/PropertyCard';
-import { getNewBuildings, getPropertiesForSale, getPropertiesForRent, Property } from '../../services/propertyService';
+import { getAllProperties, getNewBuildings, getPropertiesForSale, getPropertiesForRent, Property } from '../../services/propertyService';
 
-// Define category types and their respective titles
+// Define category types and their respective titles and fetch strategies
 const categoryConfig = {
   'new-buildings': {
     title: 'Новостройки',
@@ -19,6 +19,26 @@ const categoryConfig = {
   'rent': {
     title: 'Снять',
     fetchFunction: getPropertiesForRent
+  },
+  'commercial': {
+    title: 'Коммерческая недвижимость',
+    fetchFunction: async (limit: number = 24) => {
+      // Получаем все объекты недвижимости и фильтруем по is_commercial = true
+      const allProperties = await getAllProperties();
+      return allProperties
+        .filter(property => property.isCommercial)
+        .slice(0, limit);
+    }
+  },
+  'country': {
+    title: 'Загородная недвижимость',
+    fetchFunction: async (limit: number = 24) => {
+      // Получаем все объекты недвижимости и фильтруем по is_country = true
+      const allProperties = await getAllProperties();
+      return allProperties
+        .filter(property => property.isCountry)
+        .slice(0, limit);
+    }
   }
 };
 

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useRouter } from 'next/router';
 import { Navbar } from './Navbar';
 import { CitySelector } from './CitySelector';
 import { UserMenu } from './UserMenu';
@@ -8,6 +9,7 @@ import { useAuth } from '../../../context/AuthContext';
 
 export const Header = () => {
   const { isAuthenticated } = useAuth();
+  const router = useRouter();
   
   const handleHamburgerClick = () => {
     const mobileMenu = document.querySelector('.navbar-mobile');
@@ -15,6 +17,11 @@ export const Header = () => {
       mobileMenu.classList.add('visible');
       document.body.style.overflow = 'hidden';
     }
+  };
+
+  // Функция для навигации с закрытием меню при необходимости
+  const navigateTo = (path: string) => {
+    router.push(path);
   };
 
   return (
@@ -35,13 +42,13 @@ export const Header = () => {
               </button>
               <div className="navbar-desktop">
                 <div className="menu-items">
-                  <button className="menu-item">Купить</button>
-                  <button className="menu-item">Снять</button>
-                  <button className="menu-item">Продать</button>
-                  <button className="menu-item">Сдать</button>
-                  <button className="menu-item">Новостройки</button>
-                  <button className="menu-item">Загородная</button>
-                  <button className="menu-item">Коммерческая</button>
+                  <Link href="/category/buy" className="menu-item">Купить</Link>
+                  <Link href="/category/rent" className="menu-item">Снять</Link>
+                  <Link href="/property/create" className="menu-item">Продать</Link>
+                  <Link href="/property/create" className="menu-item">Сдать</Link>
+                  <Link href="/category/new-buildings" className="menu-item">Новостройки</Link>
+                  <Link href="/category/country" className="menu-item">Загородная</Link>
+                  <Link href="/category/commercial" className="menu-item">Коммерческая</Link>
                 </div>
               </div>
             </div>

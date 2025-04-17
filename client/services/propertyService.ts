@@ -142,6 +142,7 @@ export interface Property {
   isNewBuilding: boolean;
   isCommercial: boolean;
   isForRent: boolean;
+  isCountry: boolean;
   description: string;
 }
 
@@ -319,6 +320,7 @@ export const mapPropertyFromAPI = (property: PropertyFromAPI): Property => {
     isNewBuilding: property.is_new_building,
     isCommercial: property.is_commercial,
     isForRent: isForRent,
+    isCountry: property.is_country,
     description: property.description
   };
 };

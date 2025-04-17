@@ -1,9 +1,11 @@
 import React from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/router';
 import { useAuth } from '../../../context/AuthContext';
 
 export const Navbar = () => {
   const { isAuthenticated } = useAuth();
+  const router = useRouter();
   
   const closeMobileMenu = () => {
     const mobileMenu = document.querySelector('.navbar-mobile');
@@ -11,6 +13,12 @@ export const Navbar = () => {
       mobileMenu.classList.remove('visible');
       document.body.style.overflow = ''; // Restore scrolling when menu is closed
     }
+  };
+
+  // Функция для навигации с закрытием меню
+  const navigateTo = (path: string) => {
+    closeMobileMenu();
+    router.push(path);
   };
 
   return (
@@ -24,13 +32,33 @@ export const Navbar = () => {
         </button>
       </div>
       <div className="mobile-menu-content">
-        <button className="menu-item" onClick={closeMobileMenu}>Купить</button>
-        <button className="menu-item" onClick={closeMobileMenu}>Снять</button>
-        <button className="menu-item" onClick={closeMobileMenu}>Продать</button>
-        <button className="menu-item" onClick={closeMobileMenu}>Сдать</button>
-        <button className="menu-item" onClick={closeMobileMenu}>Новостройки</button>
-        <button className="menu-item" onClick={closeMobileMenu}>Загородная</button>
-        <button className="menu-item" onClick={closeMobileMenu}>Коммерческая</button>
+        <Link href="/category/buy" className="menu-item-link" onClick={closeMobileMenu}>
+          <div className="menu-item">Купить</div>
+        </Link>
+        
+        <Link href="/category/rent" className="menu-item-link" onClick={closeMobileMenu}>
+          <div className="menu-item">Снять</div>
+        </Link>
+        
+        <Link href="/property/create" className="menu-item-link" onClick={closeMobileMenu}>
+          <div className="menu-item">Продать</div>
+        </Link>
+        
+        <Link href="/property/create" className="menu-item-link" onClick={closeMobileMenu}>
+          <div className="menu-item">Сдать</div>
+        </Link>
+        
+        <Link href="/category/new-buildings" className="menu-item-link" onClick={closeMobileMenu}>
+          <div className="menu-item">Новостройки</div>
+        </Link>
+        
+        <Link href="/category/country" className="menu-item-link" onClick={closeMobileMenu}>
+          <div className="menu-item">Загородная</div>
+        </Link>
+        
+        <Link href="/category/commercial" className="menu-item-link" onClick={closeMobileMenu}>
+          <div className="menu-item">Коммерческая</div>
+        </Link>
         
         {isAuthenticated && (
           <Link href="/favorites" className="menu-item-link" onClick={closeMobileMenu}>

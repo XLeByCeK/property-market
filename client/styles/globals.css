@@ -329,6 +329,47 @@ body {
   padding-left: 2rem;
 }
 
+/* Стили для ссылок в меню, чтобы они выглядели как кнопки */
+a.menu-item {
+  display: block;
+  padding: 0.875rem 1.5rem;
+  color: rgb(17 24 39);
+  text-decoration: none;
+  width: 100%;
+  text-align: left;
+  font-size: 1rem;
+  transition: all 0.2s ease-in-out;
+}
+
+a.menu-item:hover {
+  background-color: rgb(243 244 246);
+  color: rgb(37 99 235);
+  padding-left: 2rem;
+}
+
+.menu-item-link {
+  text-decoration: none;
+  color: inherit;
+  display: block;
+  width: 100%;
+}
+
+.menu-item-link:hover {
+  text-decoration: none;
+  color: inherit;
+}
+
+.menu-item-link .menu-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.menu-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
 /* Mobile user menu */
 .user-menu-mobile {
   position: fixed;
