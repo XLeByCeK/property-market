@@ -5,6 +5,7 @@ import Head from 'next/head';
 import { Header } from '../../components/layout/Header/Header';
 import { Footer } from '../../components/layout/Footer/Footer';
 import { useAuth } from '../../context/AuthContext';
+import Link from 'next/link';
 
 const ProfilePage: NextPage = () => {
   const { user, isAuthenticated, isLoading } = useAuth();
@@ -57,15 +58,15 @@ const ProfilePage: NextPage = () => {
                   <button className="list-group-item list-group-item-action active py-3 mb-2">
                     Личные данные
                   </button>
-                  <button className="list-group-item list-group-item-action py-3 mb-2">
+                  <Link href="/profile/favorites" className="list-group-item list-group-item-action py-3 mb-2">
                     Избранное
-                  </button>
-                  <button className="list-group-item list-group-item-action py-3 mb-2">
+                  </Link>
+                  <Link href="/profile/history" className="list-group-item list-group-item-action py-3 mb-2">
                     История просмотров
-                  </button>
-                  <button className="list-group-item list-group-item-action py-3">
+                  </Link>
+                  <Link href="/profile/properties" className="list-group-item list-group-item-action py-3">
                     Мои объявления
-                  </button>
+                  </Link>
                   <div className="flex-grow-1"></div>
                 </div>
               </div>

@@ -63,6 +63,9 @@ const FavoritesPage: NextPage = () => {
             </svg>
           </Link>
           <h1 className="category-title m-0">Избранное</h1>
+          <Link href="/profile/favorites" className="btn btn-outline-primary ms-auto">
+            Управление избранным в профиле
+          </Link>
         </div>
 
         {loading ? (
