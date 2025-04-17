@@ -202,29 +202,35 @@ export const toggleFavorite = async (propertyId: string | number): Promise<{favo
 // Get favorite properties for the current user
 export const getFavoriteProperties = async (): Promise<Property[]> => {
   try {
-    console.log('Fetching favorite properties');
+    console.log('[getFavoriteProperties] Starting to fetch favorite properties');
     
     const token = localStorage.getItem('token');
     if (!token) {
-      console.warn('No authentication token available when fetching favorites');
+      console.warn('[getFavoriteProperties] No authentication token available when fetching favorites');
       return [];
     }
     
-    const response = await api.properties.getFavorites();
+    // Используем API клиент вместо прямого fetch
+    const data = await api.properties.getFavorites();
+    console.log(`[getFavoriteProperties] Raw response data:`, data);
     
-    console.log('Favorite properties response:', response);
-    
-    if (!response || !Array.isArray(response)) {
-      console.error('Invalid response format from favorites API:', response);
+    if (!data || !Array.isArray(data)) {
+      console.error('[getFavoriteProperties] Invalid response format:', data);
       return [];
     }
     
-    return response.map(mapPropertyFromAPI);
+    console.log(`[getFavoriteProperties] Found ${data.length} favorites`);
+    
+    // Преобразуем данные API в формат для UI
+    const mappedProperties = data.map(mapPropertyFromAPI);
+    console.log(`[getFavoriteProperties] Mapped ${mappedProperties.length} properties for UI`);
+    
+    return mappedProperties;
   } catch (error: any) {
-    console.error('Error fetching favorite properties:', error);
+    console.error('[getFavoriteProperties] Error fetching favorite properties:', error);
     if (error.response?.status === 401) {
       // Token expired or unauthorized
-      console.warn('Unauthorized access to favorites. User may need to re-login.');
+      console.warn('[getFavoriteProperties] Unauthorized access to favorites. User may need to re-login.');
     }
     // Return empty array instead of error
     return [];
@@ -233,37 +239,32 @@ export const getFavoriteProperties = async (): Promise<Property[]> => {
 
 // Check if a property is favorited by the current user
 export const isPropertyFavorited = async (propertyId: string | number): Promise<boolean> => {
-  console.log('Checking if property is favorited:', propertyId);
+  console.log('[isPropertyFavorited] Checking if property is favorited:', propertyId);
   try {
     // Ensure we have a valid property ID
     const numericId = typeof propertyId === 'string' ? parseInt(propertyId, 10) : propertyId;
     if (isNaN(numericId)) {
-      console.error('Invalid property ID provided to isPropertyFavorited:', propertyId);
+      console.error('[isPropertyFavorited] Invalid property ID provided:', propertyId);
       return false;
     }
     
     // Make sure we have authentication
     const token = localStorage.getItem('token');
     if (!token) {
-      console.log('No authentication token available to check favorites');
+      console.log('[isPropertyFavorited] No authentication token available to check favorites');
       return false;
     }
+
+    // Используем новый метод API для проверки статуса избранного
+    const response = await api.properties.checkFavorite(numericId) as { favorited: boolean };
+    console.log(`[isPropertyFavorited] Response from API:`, response);
     
-    const favorites = await getFavoriteProperties();
-    console.log('Got favorites list with length:', favorites.length);
-    if (favorites.length > 0) {
-      console.log('First favorite ID:', favorites[0].id, 'type:', typeof favorites[0].id);
-    }
-    
-    const isFavorited = favorites.some(property => Number(property.id) === numericId);
-    console.log(`Property ${numericId} is favorited:`, isFavorited);
-    
-    return isFavorited;
+    return response?.favorited === true;
   } catch (error: any) {
-    console.error('Error checking if property is favorited:', error);
+    console.error('[isPropertyFavorited] Error checking if property is favorited:', error);
     if (error.response) {
-      console.error('Response status:', error.response.status);
-      console.error('Response data:', error.response.data);
+      console.error('[isPropertyFavorited] Response status:', error.response.status);
+      console.error('[isPropertyFavorited] Response data:', error.response.data);
     }
     return false;
   }

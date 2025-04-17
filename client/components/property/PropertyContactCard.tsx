@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { useAuth } from '../../context/AuthContext';
 import { AuthModal } from '../auth/AuthModal';
-import axios from 'axios';
+import { toggleFavorite, isPropertyFavorited } from '../../services/propertyService';
 import { sendMessage } from '../../services/chatService';
 
 interface PropertyContactCardProps {
@@ -19,34 +19,40 @@ export const PropertyContactCard: React.FC<PropertyContactCardProps> = ({ proper
   const { isAuthenticated, user } = useAuth();
   const router = useRouter();
   
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
-  
   // Format price like 1000000 -> 1 000 000
   const formatPrice = (price: number) => {
     return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
   };
   
-  // Check if the property is in user's favorites - simplified
+  // Проверка статуса избранного при загрузке и при изменении аутентификации
   useEffect(() => {
-    if (isAuthenticated && property?.favorites && user) {
-      const isPropertyFavorited = property.favorites.some(
-        (fav: any) => fav.user_id === user.id
-      );
-      setIsFavorite(isPropertyFavorited);
+    if (isAuthenticated && property?.id) {
+      const checkFavoriteStatus = async () => {
+        try {
+          console.log(`[PropertyContactCard] Checking favorite status for property: ${property.id}`);
+          const favorited = await isPropertyFavorited(property.id);
+          console.log(`[PropertyContactCard] Property ${property.id} favorite status: ${favorited}`);
+          setIsFavorite(favorited);
+        } catch (error) {
+          console.error(`[PropertyContactCard] Error checking favorite status:`, error);
+        }
+      };
+      
+      checkFavoriteStatus();
     }
-  }, [isAuthenticated, property?.favorites, user]);
+  }, [property?.id, isAuthenticated]);
   
   const handleToggleFavorite = async () => {
-    console.log('Toggling favorite for property:', property?.id);
+    console.log('[PropertyContactCard] Toggling favorite for property:', property?.id);
     
     if (!isAuthenticated) {
-      console.log('User not authenticated, opening auth modal');
+      console.log('[PropertyContactCard] User not authenticated, opening auth modal');
       setIsAuthModalOpen(true);
       return;
     }
     
     if (isToggling || !property?.id) {
-      console.log('Already toggling or invalid property ID');
+      console.log('[PropertyContactCard] Already toggling or invalid property ID');
       return; // Prevent multiple clicks or invalid property
     }
     
@@ -56,40 +62,24 @@ export const PropertyContactCard: React.FC<PropertyContactCardProps> = ({ proper
       
       // Ensure we have a valid number
       if (isNaN(numericId)) {
-        console.error('Invalid property ID:', property.id);
+        console.error('[PropertyContactCard] Invalid property ID:', property.id);
         return;
       }
       
-      console.log('Making API call to toggle favorite for ID:', numericId);
+      console.log('[PropertyContactCard] Making API call to toggle favorite for ID:', numericId);
       
-      // Direct axios call
-      const token = localStorage.getItem('token');
-      if (!token) {
-        console.error('No authentication token found');
-        setIsAuthModalOpen(true);
-        return;
-      }
+      // Используем функцию из сервиса
+      const result = await toggleFavorite(numericId);
       
-      const response = await axios.post(
-        `${API_URL}/properties/favorites/${numericId}`, 
-        {}, 
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          }
-        }
-      );
+      console.log('[PropertyContactCard] Toggle favorite API call successful. Result:', result);
       
-      console.log('Toggle favorite API call successful. Result:', response.data);
-      
-      // Update local state
-      setIsFavorite(!isFavorite);
+      // Обновляем статус на основе ответа
+      setIsFavorite(result.favorited);
     } catch (error: any) {
-      console.error('Error toggling favorite status:', error);
+      console.error('[PropertyContactCard] Error toggling favorite status:', error);
       if (error.response) {
-        console.error('Response status:', error.response.status);
-        console.error('Response data:', error.response.data);
+        console.error('[PropertyContactCard] Response status:', error.response.status);
+        console.error('[PropertyContactCard] Response data:', error.response.data);
         
         // If unauthorized, open auth modal
         if (error.response.status === 401) {

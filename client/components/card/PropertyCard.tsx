@@ -3,7 +3,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useAuth } from '../../context/AuthContext';
 import { AuthModal } from '../auth/AuthModal';
-import axios from 'axios';
+import { toggleFavorite, isPropertyFavorited } from '../../services/propertyService';
 
 interface PropertyCardProps {
   id: string;
@@ -33,14 +33,23 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({
   const [isToggling, setIsToggling] = useState(false);
   const { isAuthenticated, user } = useAuth();
   
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
-
-  // Check if the property is favorited on initial load
+  // Проверяем статус избранного при загрузке и при изменении аутентификации
   useEffect(() => {
     if (isAuthenticated) {
-      setIsFavorite(isFavorited);
+      const checkFavoriteStatus = async () => {
+        try {
+          console.log(`Checking favorite status for property: ${id}`);
+          const favorited = await isPropertyFavorited(id);
+          console.log(`Property ${id} favorite status: ${favorited}`);
+          setIsFavorite(favorited);
+        } catch (error) {
+          console.error(`Error checking favorite status for property ${id}:`, error);
+        }
+      };
+      
+      checkFavoriteStatus();
     }
-  }, [isAuthenticated, isFavorited]);
+  }, [id, isAuthenticated]);
 
   const handleToggleFavorite = async (e: React.MouseEvent) => {
     console.log('Toggling favorite for property ID:', id);
@@ -71,32 +80,14 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({
       }
       
       console.log('Making API call to toggle favorite for ID:', numericId);
-      console.log('Current auth token:', localStorage.getItem('token') ? 'Token exists' : 'No token');
       
-      // Use direct axios call to bypass any potential API wrapper issues
-      const token = localStorage.getItem('token');
-      if (!token) {
-        console.error('No authentication token found');
-        setIsAuthModalOpen(true);
-        return;
-      }
+      const result = await toggleFavorite(numericId);
       
-      const response = await axios.post(
-        `${API_URL}/properties/favorites/${numericId}`, 
-        {}, 
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          }
-        }
-      );
+      console.log('Toggle favorite API call successful. Result:', result);
       
-      console.log('Toggle favorite API call successful. Result:', response.data);
-      
-      // Update local state
-      setIsFavorite(!isFavorite);
-      console.log('Updated favorite state to:', !isFavorite ? 'favorited' : 'not favorited');
+      // Update local state based on the API response
+      setIsFavorite(result.favorited);
+      console.log('Updated favorite state to:', result.favorited ? 'favorited' : 'not favorited');
     } catch (error: any) {
       console.error('Error toggling favorite status. Full error:', error);
       if (error.response) {

@@ -309,7 +309,345 @@ router.get('/for-rent', async (req, res) => {
   }
 });
 
-// Get property by ID
+// Get properties for the current user
+router.get('/user', authenticateToken, async (req, res) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const properties = await prisma.property.findMany({
+      where: {
+        user_id: req.user.id,
+      },
+      include: {
+        property_type: true,
+        transaction_type: true,
+        city: true,
+        images: {
+          orderBy: {
+            order: 'asc',
+          },
+        },
+      },
+      orderBy: {
+        created_at: 'desc',
+      },
+    });
+
+    res.json(properties);
+  } catch (error) {
+    console.error('Error fetching user properties:', error);
+    res.status(500).json({ error: 'Failed to fetch properties' });
+  }
+});
+
+// Route for reference data endpoints
+router.get('/property-types', async (req, res) => {
+  try {
+    const propertyTypes = await prisma.property_type.findMany({
+      orderBy: {
+        name: 'asc',
+      },
+    });
+    res.json(propertyTypes);
+  } catch (error) {
+    console.error('Error fetching property types:', error);
+    res.status(500).json({ error: 'Failed to fetch property types' });
+  }
+});
+
+// Toggle favorite status for a property
+router.post('/favorites/:propertyId', authenticateToken, async (req, res) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const propertyId = parseInt(req.params.propertyId);
+    if (isNaN(propertyId)) {
+      return res.status(400).json({ error: 'Invalid property ID' });
+    }
+
+    // Check if property exists
+    const property = await prisma.property.findUnique({
+      where: { id: propertyId },
+    });
+
+    if (!property) {
+      return res.status(404).json({ error: 'Property not found' });
+    }
+
+    // Check if the property is already in favorites
+    const existingFavorite = await prisma.favorite.findUnique({
+      where: {
+        user_id_property_id: {
+          user_id: req.user.id,
+          property_id: propertyId,
+        },
+      },
+    });
+
+    if (existingFavorite) {
+      // Remove from favorites
+      await prisma.favorite.delete({
+        where: {
+          user_id_property_id: {
+            user_id: req.user.id,
+            property_id: propertyId,
+          },
+        },
+      });
+      res.json({ message: 'Property removed from favorites', favorited: false });
+    } else {
+      // Add to favorites
+      await prisma.favorite.create({
+        data: {
+          user_id: req.user.id,
+          property_id: propertyId,
+        },
+      });
+      res.json({ message: 'Property added to favorites', favorited: true });
+    }
+  } catch (error) {
+    console.error('Error toggling favorite status:', error);
+    res.status(500).json({ error: 'Failed to update favorite status' });
+  }
+});
+
+// Check if property is favorited by the current user
+router.get('/favorites/check/:propertyId', authenticateToken, async (req, res) => {
+  try {
+    console.log(`GET /properties/favorites/check/${req.params.propertyId} - начало обработки запроса`);
+    
+    if (!req.user) {
+      console.log('GET /properties/favorites/check - ошибка: пользователь не аутентифицирован');
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const propertyId = parseInt(req.params.propertyId);
+    if (isNaN(propertyId)) {
+      console.log(`GET /properties/favorites/check - ошибка: недопустимый ID объекта (${req.params.propertyId})`);
+      return res.status(400).json({ error: 'Invalid property ID' });
+    }
+
+    console.log(`GET /properties/favorites/check - проверка избранного для пользователя: ${req.user.id}, объект: ${propertyId}`);
+    
+    // Check if property is in favorites
+    const favorite = await prisma.favorite.findUnique({
+      where: {
+        user_id_property_id: {
+          user_id: req.user.id,
+          property_id: propertyId,
+        },
+      },
+    });
+
+    const isFavorited = !!favorite;
+    console.log(`GET /properties/favorites/check - результат: объект ${isFavorited ? 'В избранном' : 'НЕ в избранном'}`);
+
+    res.json({ favorited: isFavorited });
+  } catch (error) {
+    console.error('Error checking favorite status:', error);
+    res.status(500).json({ error: 'Failed to check favorite status' });
+  }
+});
+
+// Get favorite properties for the current user
+router.get('/favorites', authenticateToken, async (req, res) => {
+  try {
+    console.log('GET /properties/favorites - начало обработки запроса');
+    console.log('Пользователь:', req.user ? `ID: ${req.user.id}` : 'не аутентифицирован');
+    
+    if (!req.user) {
+      console.log('GET /properties/favorites - ошибка: пользователь не аутентифицирован');
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    console.log(`GET /properties/favorites - поиск избранного для пользователя ID: ${req.user.id}`);
+    
+    // Get favorite properties for the user
+    const favoriteProperties = await prisma.favorite.findMany({
+      where: {
+        user_id: req.user.id,
+      },
+      include: {
+        property: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                first_name: true,
+                last_name: true,
+                phone: true,
+              },
+            },
+            property_type: true,
+            transaction_type: true,
+            city: true,
+            district: true,
+            metro_station: true,
+            images: true,
+          },
+        },
+      },
+      orderBy: {
+        created_at: 'desc',
+      },
+    });
+
+    console.log(`GET /properties/favorites - найдено ${favoriteProperties.length} избранных объектов`);
+    
+    // Extract just the property data
+    const properties = favoriteProperties.map(fav => fav.property);
+    console.log(`GET /properties/favorites - отправка ${properties.length} объектов в ответе`);
+    
+    res.json(properties);
+  } catch (error) {
+    console.error('Error fetching favorite properties:', error);
+    res.status(500).json({ error: 'Failed to fetch favorite properties' });
+  }
+});
+
+// Alternative route for getting favorite properties - used as a workaround for routing conflicts
+router.get('/user-favorites', authenticateToken, async (req, res) => {
+  try {
+    console.log('GET /properties/user-favorites - начало обработки запроса');
+    console.log('Пользователь:', req.user ? `ID: ${req.user.id}` : 'не аутентифицирован');
+    
+    if (!req.user) {
+      console.log('GET /properties/user-favorites - ошибка: пользователь не аутентифицирован');
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    console.log(`GET /properties/user-favorites - поиск избранного для пользователя ID: ${req.user.id}`);
+    
+    // Get favorite properties for the user
+    const favoriteProperties = await prisma.favorite.findMany({
+      where: {
+        user_id: req.user.id,
+      },
+      include: {
+        property: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                first_name: true,
+                last_name: true,
+                phone: true,
+              },
+            },
+            property_type: true,
+            transaction_type: true,
+            city: true,
+            district: true,
+            metro_station: true,
+            images: true,
+          },
+        },
+      },
+      orderBy: {
+        created_at: 'desc',
+      },
+    });
+
+    console.log(`GET /properties/user-favorites - найдено ${favoriteProperties.length} избранных объектов`);
+    
+    // Extract just the property data
+    const properties = favoriteProperties.map(fav => fav.property);
+    console.log(`GET /properties/user-favorites - отправка ${properties.length} объектов в ответе`);
+    
+    res.json(properties);
+  } catch (error) {
+    console.error('Error fetching favorite properties:', error);
+    res.status(500).json({ error: 'Failed to fetch favorite properties' });
+  }
+});
+
+router.get('/transaction-types', async (req, res) => {
+  try {
+    const transactionTypes = await prisma.transaction_type.findMany({
+      orderBy: {
+        name: 'asc',
+      },
+    });
+    res.json(transactionTypes);
+  } catch (error) {
+    console.error('Error fetching transaction types:', error);
+    res.status(500).json({ error: 'Failed to fetch transaction types' });
+  }
+});
+
+router.get('/cities', async (req, res) => {
+  try {
+    const cities = await prisma.city.findMany({
+      orderBy: {
+        name: 'asc',
+      },
+    });
+    res.json(cities);
+  } catch (error) {
+    console.error('Error fetching cities:', error);
+    res.status(500).json({ error: 'Failed to fetch cities' });
+  }
+});
+
+router.get('/cities/:cityId/districts', async (req, res) => {
+  try {
+    const cityId = parseInt(req.params.cityId);
+    if (isNaN(cityId)) {
+      return res.status(400).json({ error: 'Invalid city ID' });
+    }
+    
+    const districts = await prisma.district.findMany({
+      where: {
+        city_id: cityId,
+      },
+      orderBy: {
+        name: 'asc',
+      },
+    });
+    res.json(districts);
+  } catch (error) {
+    console.error('Error fetching districts:', error);
+    res.status(500).json({ error: 'Failed to fetch districts' });
+  }
+});
+
+router.get('/cities/:cityId/metro', async (req, res) => {
+  try {
+    const cityId = parseInt(req.params.cityId);
+    if (isNaN(cityId)) {
+      return res.status(400).json({ error: 'Invalid city ID' });
+    }
+    
+    const metroStations = await prisma.metro_station.findMany({
+      where: {
+        city_id: cityId,
+      },
+      orderBy: {
+        name: 'asc',
+      },
+    });
+    res.json(metroStations);
+  } catch (error) {
+    console.error('Error fetching metro stations:', error);
+    res.status(500).json({ error: 'Failed to fetch metro stations' });
+  }
+});
+
+// Добавляем маршрут для проверки здоровья API
+router.get('/health', (req, res) => {
+  try {
+    res.json({ status: 'ok', time: new Date().toISOString() });
+  } catch (error) {
+    console.error('Error in health check:', error);
+    res.status(500).json({ error: 'Health check failed' });
+  }
+});
+
+// Get property by ID - ВАЖНО: этот маршрут должен быть последним, чтобы не перехватывать другие маршруты!
 router.get('/:id', async (req, res) => {
   try {
     const propertyId = parseInt(req.params.id);
@@ -538,230 +876,6 @@ router.delete('/:id', authenticateToken, async (req, res) => {
   } catch (error) {
     console.error('Error deleting property:', error);
     res.status(500).json({ error: 'Failed to delete property' });
-  }
-});
-
-// Get properties for the current user
-router.get('/user', authenticateToken, async (req, res) => {
-  try {
-    if (!req.user) {
-      return res.status(401).json({ error: 'Unauthorized' });
-    }
-
-    const properties = await prisma.property.findMany({
-      where: {
-        user_id: req.user.id,
-      },
-      include: {
-        property_type: true,
-        transaction_type: true,
-        city: true,
-        images: {
-          orderBy: {
-            order: 'asc',
-          },
-        },
-      },
-      orderBy: {
-        created_at: 'desc',
-      },
-    });
-
-    res.json(properties);
-  } catch (error) {
-    console.error('Error fetching user properties:', error);
-    res.status(500).json({ error: 'Failed to fetch properties' });
-  }
-});
-
-// Route for reference data endpoints
-router.get('/property-types', async (req, res) => {
-  try {
-    const propertyTypes = await prisma.property_type.findMany({
-      orderBy: {
-        name: 'asc',
-      },
-    });
-    res.json(propertyTypes);
-  } catch (error) {
-    console.error('Error fetching property types:', error);
-    res.status(500).json({ error: 'Failed to fetch property types' });
-  }
-});
-
-// Toggle favorite status for a property
-router.post('/favorites/:propertyId', authenticateToken, async (req, res) => {
-  try {
-    if (!req.user) {
-      return res.status(401).json({ error: 'Unauthorized' });
-    }
-
-    const propertyId = parseInt(req.params.propertyId);
-    if (isNaN(propertyId)) {
-      return res.status(400).json({ error: 'Invalid property ID' });
-    }
-
-    // Check if property exists
-    const property = await prisma.property.findUnique({
-      where: { id: propertyId },
-    });
-
-    if (!property) {
-      return res.status(404).json({ error: 'Property not found' });
-    }
-
-    // Check if the property is already in favorites
-    const existingFavorite = await prisma.favorite.findUnique({
-      where: {
-        user_id_property_id: {
-          user_id: req.user.id,
-          property_id: propertyId,
-        },
-      },
-    });
-
-    if (existingFavorite) {
-      // Remove from favorites
-      await prisma.favorite.delete({
-        where: {
-          user_id_property_id: {
-            user_id: req.user.id,
-            property_id: propertyId,
-          },
-        },
-      });
-      res.json({ message: 'Property removed from favorites', favorited: false });
-    } else {
-      // Add to favorites
-      await prisma.favorite.create({
-        data: {
-          user_id: req.user.id,
-          property_id: propertyId,
-        },
-      });
-      res.json({ message: 'Property added to favorites', favorited: true });
-    }
-  } catch (error) {
-    console.error('Error toggling favorite status:', error);
-    res.status(500).json({ error: 'Failed to update favorite status' });
-  }
-});
-
-// Get favorite properties for the current user
-router.get('/favorites', authenticateToken, async (req, res) => {
-  try {
-    if (!req.user) {
-      return res.status(401).json({ error: 'Unauthorized' });
-    }
-
-    // Get favorite properties for the user
-    const favoriteProperties = await prisma.favorite.findMany({
-      where: {
-        user_id: req.user.id,
-      },
-      include: {
-        property: {
-          include: {
-            user: {
-              select: {
-                id: true,
-                first_name: true,
-                last_name: true,
-                phone: true,
-              },
-            },
-            property_type: true,
-            transaction_type: true,
-            city: true,
-            district: true,
-            metro_station: true,
-            images: true,
-          },
-        },
-      },
-      orderBy: {
-        created_at: 'desc',
-      },
-    });
-
-    // Extract just the property data
-    const properties = favoriteProperties.map(fav => fav.property);
-    res.json(properties);
-  } catch (error) {
-    console.error('Error fetching favorite properties:', error);
-    res.status(500).json({ error: 'Failed to fetch favorite properties' });
-  }
-});
-
-router.get('/transaction-types', async (req, res) => {
-  try {
-    const transactionTypes = await prisma.transaction_type.findMany({
-      orderBy: {
-        name: 'asc',
-      },
-    });
-    res.json(transactionTypes);
-  } catch (error) {
-    console.error('Error fetching transaction types:', error);
-    res.status(500).json({ error: 'Failed to fetch transaction types' });
-  }
-});
-
-router.get('/cities', async (req, res) => {
-  try {
-    const cities = await prisma.city.findMany({
-      orderBy: {
-        name: 'asc',
-      },
-    });
-    res.json(cities);
-  } catch (error) {
-    console.error('Error fetching cities:', error);
-    res.status(500).json({ error: 'Failed to fetch cities' });
-  }
-});
-
-router.get('/cities/:cityId/districts', async (req, res) => {
-  try {
-    const cityId = parseInt(req.params.cityId);
-    if (isNaN(cityId)) {
-      return res.status(400).json({ error: 'Invalid city ID' });
-    }
-    
-    const districts = await prisma.district.findMany({
-      where: {
-        city_id: cityId,
-      },
-      orderBy: {
-        name: 'asc',
-      },
-    });
-    res.json(districts);
-  } catch (error) {
-    console.error('Error fetching districts:', error);
-    res.status(500).json({ error: 'Failed to fetch districts' });
-  }
-});
-
-router.get('/cities/:cityId/metro', async (req, res) => {
-  try {
-    const cityId = parseInt(req.params.cityId);
-    if (isNaN(cityId)) {
-      return res.status(400).json({ error: 'Invalid city ID' });
-    }
-    
-    const metroStations = await prisma.metro_station.findMany({
-      where: {
-        city_id: cityId,
-      },
-      orderBy: {
-        name: 'asc',
-      },
-    });
-    res.json(metroStations);
-  } catch (error) {
-    console.error('Error fetching metro stations:', error);
-    res.status(500).json({ error: 'Failed to fetch metro stations' });
   }
 });
 

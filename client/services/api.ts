@@ -233,7 +233,13 @@ export const api = {
     getFavorites: () => 
       apiRequest({
         method: 'GET',
-        url: '/properties/favorites',
+        url: '/properties/user-favorites',
+      }),
+      
+    checkFavorite: (propertyId: number) =>
+      apiRequest({
+        method: 'GET',
+        url: `/properties/favorites/check/${propertyId}`,
       }),
   },
   
