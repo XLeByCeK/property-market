@@ -53,7 +53,7 @@ const ProfilePropertiesPage: NextPage = () => {
         setLoading(true);
         // This endpoint would need to be implemented
         const response = await api.properties.getUserProperties();
-        setProperties(response);
+        setProperties(response as Property[]);
       } catch (err) {
         console.error('Error fetching properties:', err);
         setError('Failed to load your properties. Please try again later.');
@@ -182,55 +182,55 @@ const ProfilePropertiesPage: NextPage = () => {
                     </Link>
                   </div>
                 ) : (
-                  <div className="properties-list">
+                  <div className="properties-list" style={{ maxHeight: '600px', overflowY: 'auto', padding: '10px 5px' }}>
                     {properties.map(property => (
-                      <div key={property.id} className="property-item card mb-4">
+                      <div key={property.id} className="property-item card mb-3">
                         <div className="row g-0">
                           <div className="col-md-3">
                             <img 
                               src={getMainImage(property)} 
                               className="img-fluid rounded-start property-img" 
                               alt={property.title}
-                              style={{ height: '100%', objectFit: 'cover' }}
+                              style={{ height: '200px', objectFit: 'cover', width: '100%' }}
                             />
                           </div>
                           <div className="col-md-9">
-                            <div className="card-body">
+                            <div className="card-body py-2 px-3">
                               <div className="d-flex justify-content-between align-items-start">
-                                <h5 className="card-title">{property.title}</h5>
+                                <h5 className="card-title mb-1">{property.title}</h5>
                                 <span className={`badge ${getStatusBadgeClass(property.status)}`}>
                                   {getStatusText(property.status)}
                                 </span>
                               </div>
-                              <p className="card-text text-primary fw-bold mb-2">
+                              <p className="card-text text-primary fw-bold mb-1">
                                 {property.price.toLocaleString()} ₽
                               </p>
-                              <p className="card-text">
+                              <p className="card-text mb-1">
                                 <small className="text-muted">
                                   {property.property_type.name}, {property.transaction_type.name}
                                 </small>
                               </p>
-                              <p className="card-text">{property.address}</p>
-                              <p className="card-text">
+                              <p className="card-text mb-1">{property.address}</p>
+                              <p className="card-text mb-2">
                                 <small className="text-muted">
                                   Создано: {formatDate(property.created_at)}
                                 </small>
                               </p>
-                              <div className="mt-auto d-flex">
+                              <div className="d-flex">
                                 <Link 
                                   href={`/property/${property.id}`} 
-                                  className="btn btn-outline-secondary me-2"
+                                  className="btn btn-sm btn-outline-secondary me-2"
                                 >
                                   Просмотреть
                                 </Link>
                                 <Link 
                                   href={`/property/edit/${property.id}`} 
-                                  className="btn btn-outline-primary me-2"
+                                  className="btn btn-sm btn-outline-primary me-2"
                                 >
                                   Редактировать
                                 </Link>
                                 <button 
-                                  className="btn btn-outline-danger"
+                                  className="btn btn-sm btn-outline-danger"
                                   onClick={() => {
                                     // This would need additional implementation for confirmation
                                     if (window.confirm('Вы уверены, что хотите удалить это объявление?')) {
