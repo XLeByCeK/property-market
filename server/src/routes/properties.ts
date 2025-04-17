@@ -691,6 +691,8 @@ router.get('/:id', async (req, res) => {
 // Create new property
 router.post('/', authenticateToken, async (req: express.Request<{}, {}, CreatePropertyRequest>, res) => {
   try {
+    console.log('Received create property request. Request body:', req.body);
+    
     const { 
       title, 
       description, 
@@ -714,65 +716,105 @@ router.post('/', authenticateToken, async (req: express.Request<{}, {}, CreatePr
     } = req.body;
 
     // Validate input
-    if (!title || !description || !price || !area || !rooms || !address || !property_type_id || !transaction_type_id || !city_id) {
-      return res.status(400).json({ error: 'Missing required fields' });
+    const missingFields = [];
+    if (!title) missingFields.push('title');
+    if (!description) missingFields.push('description');
+    if (!price) missingFields.push('price');
+    if (!area) missingFields.push('area');
+    if (!rooms) missingFields.push('rooms');
+    if (!address) missingFields.push('address');
+    if (!property_type_id) missingFields.push('property_type_id');
+    if (!transaction_type_id) missingFields.push('transaction_type_id');
+    if (!city_id) missingFields.push('city_id');
+    if (!images || !Array.isArray(images) || images.length === 0) missingFields.push('images');
+    
+    if (missingFields.length > 0) {
+      console.error('Missing required fields:', missingFields);
+      return res.status(400).json({ error: `Missing required fields: ${missingFields.join(', ')}` });
     }
 
     if (!req.user) {
+      console.error('User not authenticated');
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
-    const property = await prisma.property.create({
-      data: {
-        title,
-        description,
-        price,
-        area,
-        rooms,
-        floor,
-        total_floors,
-        address,
-        year_built,
-        property_type_id,
-        transaction_type_id,
-        city_id,
-        district_id,
-        metro_id,
-        metro_distance,
-        is_new_building: is_new_building || false,
-        is_commercial: is_commercial || false,
-        is_country: is_country || false,
-        user_id: req.user.id,
-        images: {
-          create: images.map((url, index) => ({
-            image_url: url,
-            is_main: index === 0,
-            order: index,
-          })),
-        },
-      },
-      include: {
-        user: {
-          select: {
-            id: true,
-            first_name: true,
-            last_name: true,
-            phone: true,
-          },
-        },
-        property_type: true,
-        transaction_type: true,
-        city: true,
-        district: true,
-        metro_station: true,
-        images: true,
-      },
+    console.log('Creating new property with data:', {
+      title,
+      description,
+      price,
+      area,
+      rooms,
+      user_id: req.user.id,
+      images: images.length
     });
 
-    res.status(201).json(property);
-  } catch (error) {
+    try {
+      const property = await prisma.property.create({
+        data: {
+          title,
+          description,
+          price: typeof price === 'string' ? parseFloat(price) : price,
+          area: typeof area === 'string' ? parseFloat(area) : area,
+          rooms: typeof rooms === 'string' ? parseInt(rooms, 10) : rooms,
+          floor,
+          total_floors,
+          address,
+          year_built,
+          property_type_id: typeof property_type_id === 'string' ? parseInt(property_type_id, 10) : property_type_id,
+          transaction_type_id: typeof transaction_type_id === 'string' ? parseInt(transaction_type_id, 10) : transaction_type_id,
+          city_id: typeof city_id === 'string' ? parseInt(city_id, 10) : city_id,
+          district_id: district_id ? (typeof district_id === 'string' ? parseInt(district_id, 10) : district_id) : undefined,
+          metro_id: metro_id ? (typeof metro_id === 'string' ? parseInt(metro_id, 10) : metro_id) : undefined,
+          metro_distance: metro_distance ? (typeof metro_distance === 'string' ? parseFloat(metro_distance) : metro_distance) : undefined,
+          is_new_building: is_new_building || false,
+          is_commercial: is_commercial || false,
+          is_country: is_country || false,
+          user_id: req.user.id,
+          images: {
+            create: images.map((url, index) => ({
+              image_url: url,
+              is_main: index === 0,
+              order: index,
+            })),
+          },
+        },
+        include: {
+          user: {
+            select: {
+              id: true,
+              first_name: true,
+              last_name: true,
+              phone: true,
+            },
+          },
+          property_type: true,
+          transaction_type: true,
+          city: true,
+          district: true,
+          metro_station: true,
+          images: true,
+        },
+      });
+
+      console.log('Property created successfully. ID:', property.id);
+      res.status(201).json(property);
+    } catch (prismaError: any) {
+      console.error('Prisma error creating property:', prismaError);
+      
+      // Подробный лог ошибки Prisma
+      if (prismaError.code) {
+        console.error('Prisma error code:', prismaError.code);
+      }
+      
+      if (prismaError.meta) {
+        console.error('Prisma error meta:', prismaError.meta);
+      }
+      
+      res.status(500).json({ error: 'Database error creating property', details: prismaError.message });
+    }
+  } catch (error: any) {
     console.error('Error creating property:', error);
-    res.status(500).json({ error: 'Failed to create property' });
+    res.status(500).json({ error: 'Failed to create property', details: error.message });
   }
 });
 

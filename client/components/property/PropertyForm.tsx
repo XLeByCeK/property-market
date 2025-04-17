@@ -176,22 +176,85 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ propertyId, initialData }) 
     e.preventDefault();
     setIsSubmitting(true);
     setError('');
+
+    // Проверка данных перед отправкой
+    if (formData.images.length === 0) {
+      setError('Необходимо загрузить хотя бы одно изображение');
+      setIsSubmitting(false);
+      return;
+    }
+
+    if (!formData.property_type_id || formData.property_type_id === 0) {
+      setError('Выберите тип недвижимости');
+      setIsSubmitting(false);
+      return;
+    }
+    
+    if (!formData.transaction_type_id || formData.transaction_type_id === 0) {
+      setError('Выберите тип сделки');
+      setIsSubmitting(false);
+      return;
+    }
+    
+    if (!formData.city_id || formData.city_id === 0) {
+      setError('Выберите город');
+      setIsSubmitting(false);
+      return;
+    }
+    
+    // Конвертируем числовые значения в числа, так как они могут быть в виде строк
+    const preparedData = {
+      ...formData,
+      price: typeof formData.price === 'string' ? parseFloat(formData.price) : formData.price,
+      area: typeof formData.area === 'string' ? parseFloat(formData.area) : formData.area,
+      rooms: typeof formData.rooms === 'string' ? parseInt(formData.rooms, 10) : formData.rooms,
+      floor: formData.floor ? (typeof formData.floor === 'string' ? parseInt(formData.floor, 10) : formData.floor) : undefined,
+      total_floors: formData.total_floors ? (typeof formData.total_floors === 'string' ? parseInt(formData.total_floors, 10) : formData.total_floors) : undefined,
+      year_built: formData.year_built ? (typeof formData.year_built === 'string' ? parseInt(formData.year_built, 10) : formData.year_built) : undefined,
+      property_type_id: typeof formData.property_type_id === 'string' ? parseInt(formData.property_type_id, 10) : formData.property_type_id,
+      transaction_type_id: typeof formData.transaction_type_id === 'string' ? parseInt(formData.transaction_type_id, 10) : formData.transaction_type_id,
+      city_id: typeof formData.city_id === 'string' ? parseInt(formData.city_id, 10) : formData.city_id,
+      district_id: formData.district_id ? (typeof formData.district_id === 'string' ? parseInt(formData.district_id, 10) : formData.district_id) : undefined,
+      metro_id: formData.metro_id ? (typeof formData.metro_id === 'string' ? parseInt(formData.metro_id, 10) : formData.metro_id) : undefined,
+      metro_distance: formData.metro_distance ? (typeof formData.metro_distance === 'string' ? parseFloat(formData.metro_distance) : formData.metro_distance) : undefined,
+    };
+    
+    console.log('Submitting property data:', preparedData);
     
     try {
       if (isEditMode) {
-        await propertyService.updateProperty(propertyId!, formData);
+        await propertyService.updateProperty(propertyId!, preparedData);
         alert('Property updated successfully!');
       } else {
-        await propertyService.createProperty(formData);
+        await propertyService.createProperty(preparedData);
         alert('Property created successfully!');
       }
       
       // Redirect to property listing or detail page
       router.push('/profile/properties');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving property:', error);
-      setError('Failed to save property. Please check your input and try again.');
-      alert('Failed to save property. Please try again.');
+      
+      // Более подробное логирование ошибки
+      if (error.response) {
+        console.error('Error response data:', error.response.data);
+        console.error('Error response status:', error.response.status);
+        
+        // Отображаем более детальную ошибку
+        if (error.response.data && error.response.data.error) {
+          setError(`Ошибка: ${error.response.data.error}`);
+        } else {
+          setError(`Ошибка сервера: ${error.response.status}`);
+        }
+      } else if (error.request) {
+        console.error('Error request:', error.request);
+        setError('Ошибка сети: запрос отправлен, но ответ не получен');
+      } else {
+        console.error('Error message:', error.message);
+        setError(`Ошибка: ${error.message}`);
+      }
+      
+      alert('Не удалось сохранить объявление. Пожалуйста, попробуйте снова.');
     } finally {
       setIsSubmitting(false);
     }
