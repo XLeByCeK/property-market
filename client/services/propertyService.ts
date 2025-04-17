@@ -473,10 +473,55 @@ export const getMetroStationsByCityId = async (cityId: number) => {
   }
 };
 
+// Добавим интерфейс для ответа загрузки изображений
+interface UploadImagesResponse {
+  imageUrls: string[];
+  [key: string]: any;
+}
+
 // Methods for image upload
-export const uploadPropertyImages = async (formData: FormData) => {
+export const uploadPropertyImages = async (formData: FormData): Promise<UploadImagesResponse> => {
   try {
-    return await api.properties.uploadImages(formData);
+    console.log('Uploading property images...');
+    const response = await api.properties.uploadImages(formData) as UploadImagesResponse;
+    console.log('Upload response:', response);
+    
+    // Проверка и исправление URL-адресов изображений
+    if (response && response.imageUrls && Array.isArray(response.imageUrls)) {
+      // Получаем API URL из окружения или используем localhost
+      const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+      
+      // Преобразуем URL-адреса, если нужно
+      const processedUrls = response.imageUrls.map((url: string) => {
+        console.log('Processing image URL:', url);
+        
+        // Если URL начинается с http, то оставляем как есть
+        if (url.startsWith('http')) {
+          return url;
+        }
+        
+        // Если URL начинается с /, а API URL не заканчивается на /,
+        // то соединяем их
+        if (url.startsWith('/')) {
+          // Убедимся, что мы не добавляем /api дважды
+          if (url.startsWith('/api/')) {
+            return `${apiBaseUrl}${url}`;
+          } else if (url.startsWith('/uploads/')) {
+            return `${apiBaseUrl}${url}`;
+          } else {
+            return url;
+          }
+        }
+        
+        // В противном случае добавляем слеш
+        return `/${url}`;
+      });
+      
+      console.log('Processed image URLs:', processedUrls);
+      return { ...response, imageUrls: processedUrls };
+    }
+    
+    return response;
   } catch (error) {
     console.error('Error uploading images:', error);
     throw error;

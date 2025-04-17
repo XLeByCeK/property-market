@@ -47,20 +47,35 @@ const upload = multer({
 // Upload property images
 router.post('/upload-images', authenticateToken, upload.array('images', 10), async (req, res) => {
   try {
+    console.log('Received image upload request');
+    
     if (!req.user) {
+      console.log('Upload error: User not authenticated');
       return res.status(401).json({ error: 'Unauthorized' });
     }
     
     if (!req.files || (Array.isArray(req.files) && req.files.length === 0)) {
+      console.log('Upload error: No files were uploaded');
       return res.status(400).json({ error: 'No files uploaded' });
     }
     
+    console.log(`Processing ${Array.isArray(req.files) ? req.files.length : 0} uploaded files`);
+    
     const files = req.files as Express.Multer.File[];
+    const basePath = path.join(__dirname, '../../public');
+    
+    console.log('Base path for images:', basePath);
+    
     const imageUrls = files.map(file => {
+      console.log('Original file path:', file.path);
       // Convert Windows path separators to URL format
-      const relativePath = path.relative(path.join(__dirname, '../../public'), file.path).replace(/\\/g, '/');
-      return `/${relativePath}`;
+      const relativePath = path.relative(basePath, file.path).replace(/\\/g, '/');
+      const finalUrl = `/${relativePath}`;
+      console.log('Converted image URL:', finalUrl);
+      return finalUrl;
     });
+    
+    console.log('Final image URLs to be returned:', imageUrls);
     
     res.status(200).json({ imageUrls });
   } catch (error) {

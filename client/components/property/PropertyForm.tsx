@@ -156,8 +156,21 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ propertyId, initialData }) 
       const response = await propertyService.uploadPropertyImages(formDataForImage);
       const newImageUrls = (response as any).imageUrls;
       
-      setUploadedImageUrls([...uploadedImageUrls, ...newImageUrls]);
-      setFormData({ ...formData, images: [...formData.images, ...newImageUrls] });
+      console.log('Uploaded image URLs:', newImageUrls);
+      
+      // Fix URLs if needed (make sure they start with http or / for proper loading)
+      const processedUrls = newImageUrls.map((url: string) => {
+        // If URL doesn't start with http or /, add the API base URL
+        if (!url.startsWith('http') && !url.startsWith('/')) {
+          return `/${url}`;
+        }
+        return url;
+      });
+      
+      console.log('Processed image URLs:', processedUrls);
+      
+      setUploadedImageUrls([...uploadedImageUrls, ...processedUrls]);
+      setFormData({ ...formData, images: [...formData.images, ...processedUrls] });
     } catch (error) {
       console.error('Error uploading images:', error);
       alert('Failed to upload images. Please try again.');
@@ -571,25 +584,37 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ propertyId, initialData }) 
           
           {uploadedImageUrls.length > 0 && (
             <div className="image-preview-grid">
-              {uploadedImageUrls.map((url, index) => (
-                <div key={index} className="image-preview-item">
-                  <img
-                    src={url}
-                    alt={`Property image ${index + 1}`}
-                    className="preview-image"
-                  />
-                  <button
-                    type="button"
-                    className="remove-image-btn"
-                    onClick={() => handleRemoveImage(url)}
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <line x1="18" y1="6" x2="6" y2="18" />
-                      <line x1="6" y1="6" x2="18" y2="18" />
-                    </svg>
-                  </button>
-                </div>
-              ))}
+              {uploadedImageUrls.map((url, index) => {
+                // Log each URL for debugging
+                console.log(`Preview image ${index + 1}:`, url);
+                
+                // Make sure URL is properly formatted
+                const imageUrl = url.startsWith('http') || url.startsWith('/') ? url : `/${url}`;
+                
+                return (
+                  <div key={index} className="image-preview-item">
+                    <img
+                      src={imageUrl}
+                      alt={`Property image ${index + 1}`}
+                      className="preview-image"
+                      onError={(e) => {
+                        console.error(`Error loading image ${index + 1}:`, imageUrl);
+                        (e.target as HTMLImageElement).src = '/images/null-image.jpg'; // Fallback image
+                      }}
+                    />
+                    <button
+                      type="button"
+                      className="remove-image-btn"
+                      onClick={() => handleRemoveImage(url)}
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <line x1="18" y1="6" x2="6" y2="18" />
+                        <line x1="6" y1="6" x2="18" y2="18" />
+                      </svg>
+                    </button>
+                  </div>
+                );
+              })}
             </div>
           )}
           
