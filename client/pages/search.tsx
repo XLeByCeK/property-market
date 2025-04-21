@@ -18,7 +18,7 @@ const SearchPage: React.FC = () => {
 
     const { 
       mode, 
-      propertyTypeId, 
+      type, 
       transactionTypeId,
       rooms, 
       priceFrom, 
@@ -43,7 +43,22 @@ const SearchPage: React.FC = () => {
     // Формируем строку для отображения параметров поиска
     const queryParts = [];
     if (mode) queryParts.push(`режим: ${getSearchModeText(mode as string)}`);
-    if (propertyTypeId) queryParts.push(`тип недвижимости: ${propertyTypeId}`);
+    
+    // Обработка типа недвижимости
+    if (type) {
+      const propertyTypeMap: Record<string, string> = {
+        'apartment': 'Квартира',
+        'house': 'Дом',
+        'townhouse': 'Таунхаус',
+        'villa': 'Вилла',
+        'commercial': 'Коммерческая'
+      };
+      const typeName = propertyTypeMap[type as string] || type;
+      queryParts.push(`тип недвижимости: ${typeName}`);
+    } else if (isCommercial === 'true') {
+      queryParts.push('тип недвижимости: Коммерческая');
+    }
+    
     if (transactionTypeId) queryParts.push(`тип сделки: ${transactionTypeId}`);
     if (rooms) queryParts.push(`комнаты: ${rooms}`);
     if (priceFrom || priceTo) {
@@ -68,7 +83,6 @@ const SearchPage: React.FC = () => {
     
     // Булевы параметры
     if (isNewBuilding === 'true') queryParts.push('новостройка');
-    if (isCommercial === 'true') queryParts.push('коммерческая недвижимость');
     if (isCountry === 'true') queryParts.push('загородная недвижимость');
     
     // Для посуточной аренды

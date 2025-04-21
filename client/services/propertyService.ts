@@ -553,12 +553,73 @@ export const updateProperty = async (id: number, propertyData: PropertyFormData)
 // Поиск недвижимости с параметрами
 export const searchProperties = async (params: Record<string, any>): Promise<Property[]> => {
   try {
-    console.log('Searching properties with params:', params);
-    const data = await api.properties.search(params) as PropertyFromAPI[];
+    console.log('======= SEARCH DEBUG INFO =======');
+    console.log('Original search params:', params);
+    
+    // Клонируем параметры для возможных модификаций
+    const searchParams = { ...params };
+    
+    // Исправляем параметры поиска для соответствия с бэкендом
+    if (searchParams.type) {
+      console.log(`Searching by property type: ${searchParams.type}`);
+      
+      // Используем параметр type напрямую, так как сервер теперь корректно его обрабатывает
+      
+      switch (searchParams.type) {
+        case 'apartment':
+          // Для квартир сервер теперь корректно фильтрует с учетом is_country = false
+          searchParams.property_type_id = 4;
+          break;
+          
+        case 'house':
+          // Для домов сервер теперь корректно фильтрует с учетом is_country = true
+          searchParams.property_type_id = 2;
+          break;
+          
+        case 'townhouse':
+          // Для таунхаусов
+          searchParams.property_type_id = 1;
+          break;
+          
+        case 'villa':
+          // Для вилл
+          searchParams.property_type_id = 3;
+          break;
+          
+        case 'commercial':
+          // Для коммерческой недвижимости
+          searchParams.is_commercial = true;
+          break;
+      }
+    }
+    
+    console.log('Modified search params:', searchParams);
+    
+    // Построение URL-адреса для отладки
+    const queryString = Object.entries(searchParams)
+      .map(([key, value]) => `${key}=${encodeURIComponent(String(value))}`)
+      .join('&');
+    console.log(`🔍 Search URL: ${API_URL}/properties/search?${queryString}`);
+    console.log('================================');
+    
+    // Получаем результаты от сервера
+    const data = await api.properties.search(searchParams) as PropertyFromAPI[];
+    
     if (!data || !Array.isArray(data)) {
       console.error('Invalid search response format:', data);
       return [];
     }
+    
+    // Добавим дополнительное логирование для отладки
+    if (data.length === 0) {
+      console.log('No properties found with these parameters');
+    } else {
+      console.log('Property types found in results:');
+      const propertyTypes = Array.from(new Set(data.map(p => `${p.property_type.name} (ID: ${p.property_type.id})`)));
+      propertyTypes.forEach(type => console.log(`- ${type}`));
+    }
+    
+    // Дополнительная фильтрация больше не требуется, так как сервер правильно фильтрует
     console.log(`Got ${data.length} properties from search`);
     return data.map(mapPropertyFromAPI);
   } catch (error) {

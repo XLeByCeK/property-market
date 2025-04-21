@@ -175,6 +175,15 @@ export const SearchBanner: React.FC<SearchBannerProps> = ({
     }
   }, [searchMode, transactionTypes]);
 
+  // Статические опции для выбора типа недвижимости
+  const propertyTypeOptions = [
+    { value: '4', label: 'Квартира', type: 'apartment' },
+    { value: '2', label: 'Дом', type: 'house' },
+    { value: '1', label: 'Таунхаус', type: 'townhouse' },
+    { value: '3', label: 'Вилла', type: 'villa' },
+    { value: '5', label: 'Коммерческая', type: 'commercial' },
+  ];
+
   const roomOptions = [
     { value: 'studio', label: 'Студия' },
     { value: '1', label: '1 комната' },
@@ -200,7 +209,14 @@ export const SearchBanner: React.FC<SearchBannerProps> = ({
     };
 
     // Добавляем только непустые параметры
-    if (propertyType) searchParams.propertyTypeId = propertyType;
+    if (propertyType) {
+      // Найдем соответствующий тип из опций
+      const selectedType = propertyTypeOptions.find(opt => opt.value === propertyType);
+      if (selectedType) {
+        searchParams.type = selectedType.type; // Передаем строковый тип (apartment, house и т.д.)
+      }
+    }
+    
     if (transactionType) searchParams.transactionTypeId = transactionType;
     if (rooms) searchParams.rooms = rooms;
     if (priceFrom) searchParams.priceFrom = priceFrom;
@@ -217,7 +233,8 @@ export const SearchBanner: React.FC<SearchBannerProps> = ({
     
     // Boolean parameters
     if (isNewBuilding) searchParams.isNewBuilding = isNewBuilding;
-    if (isCommercial) searchParams.isCommercial = isCommercial;
+    // Если тип уже передан как commercial, не нужно дублировать параметр isCommercial
+    if (propertyType !== 'commercial' && isCommercial) searchParams.isCommercial = isCommercial;
     if (isCountry) searchParams.isCountry = isCountry;
 
     // Для посуточного режима добавляем дополнительные параметры
@@ -227,6 +244,9 @@ export const SearchBanner: React.FC<SearchBannerProps> = ({
       if (checkOut) searchParams.checkOut = checkOut;
     }
     
+    // Для отладки - подробно логируем параметры поиска
+    console.log('%c 🔍 SEARCH PARAMETERS', 'background: #007bff; color: white; padding: 2px 6px; border-radius: 2px;');
+    console.log('Type:', propertyType);
     console.log('Search params:', searchParams);
     
     // Перенаправляем на страницу с результатами поиска
@@ -252,8 +272,8 @@ export const SearchBanner: React.FC<SearchBannerProps> = ({
                 onChange={(e) => setPropertyType(e.target.value)}
               >
                 <option value="">Вид недвижимости</option>
-                {propertyTypes.map(type => (
-                  <option key={type.id} value={type.id.toString()}>{type.name}</option>
+                {propertyTypeOptions.map(type => (
+                  <option key={type.value} value={type.value}>{type.label}</option>
                 ))}
               </select>
 
@@ -408,8 +428,8 @@ export const SearchBanner: React.FC<SearchBannerProps> = ({
                 onChange={(e) => setPropertyType(e.target.value)}
               >
                 <option value="">Вид недвижимости</option>
-                {propertyTypes.map(type => (
-                  <option key={type.id} value={type.id.toString()}>{type.name}</option>
+                {propertyTypeOptions.map(type => (
+                  <option key={type.value} value={type.value}>{type.label}</option>
                 ))}
               </select>
 

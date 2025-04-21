@@ -667,6 +667,17 @@ router.get('/search', async (req, res) => {
   try {
     console.log('Search request received with query:', req.query);
     
+    // Отладочный вывод всех типов недвижимости
+    try {
+      const allPropertyTypes = await prisma.property_type.findMany();
+      console.log('Available property types:');
+      allPropertyTypes.forEach(type => {
+        console.log(`- ID: ${type.id}, Name: ${type.name}`);
+      });
+    } catch (error) {
+      console.error('Error fetching property types for debug:', error);
+    }
+    
     // Извлекаем все возможные параметры поиска
     const { 
       mode, 
@@ -675,7 +686,8 @@ router.get('/search', async (req, res) => {
       priceFrom, 
       priceTo, 
       address,
-      city
+      city,
+      property_type_id
     } = req.query;
 
     // Проверка общего количества объектов
@@ -714,24 +726,59 @@ router.get('/search', async (req, res) => {
 
     // Тип недвижимости
     if (type === 'apartment') {
-      whereConditions = {
-        ...whereConditions,
-        property_type: {
-          name: {
-            contains: 'квартир',
-            mode: 'insensitive'
-          }
-        }
-      };
-    } else if (type === 'house') {
+      // Для квартир используем property_type_id=4 или имя "квартира"
       whereConditions = {
         ...whereConditions,
         OR: [
-          { is_country: true },
-          {
-            property_type: {
+          { property_type_id: 4 },
+          { property_type: {
+              name: {
+                contains: 'квартир',
+                mode: 'insensitive'
+              }
+            }
+          }
+        ]
+      };
+    } else if (type === 'house') {
+      // Для домов используем property_type_id=2 или имя "дом"
+      whereConditions = {
+        ...whereConditions,
+        OR: [
+          { property_type_id: 2 },
+          { property_type: {
               name: {
                 contains: 'дом',
+                mode: 'insensitive'
+              }
+            }
+          }
+        ]
+      };
+    } else if (type === 'townhouse') {
+      // Для таунхаусов используем property_type_id=1 или имя "таунхаус"
+      whereConditions = {
+        ...whereConditions,
+        OR: [
+          { property_type_id: 1 },
+          { property_type: {
+              name: {
+                contains: 'таунхаус',
+                mode: 'insensitive'
+              }
+            }
+          }
+        ]
+      };
+    } else if (type === 'villa') {
+      // Для вилл используем property_type_id=3 или имя "вилла"
+      whereConditions = {
+        ...whereConditions,
+        OR: [
+          { property_type_id: 3 },
+          { property_type: {
+              name: {
+                contains: 'вилл',
                 mode: 'insensitive'
               }
             }
@@ -815,6 +862,17 @@ router.get('/search', async (req, res) => {
           }
         }
       };
+    }
+
+    // После обработки всех прочих условий проверяем property_type_id
+    if (property_type_id) {
+      const typeId = parseInt(property_type_id as string, 10);
+      if (!isNaN(typeId)) {
+        whereConditions = {
+          ...whereConditions,
+          property_type_id: typeId
+        };
+      }
     }
 
     // Выводим для отладки
