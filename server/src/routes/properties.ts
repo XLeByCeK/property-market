@@ -662,6 +662,213 @@ router.get('/health', (req, res) => {
   }
 });
 
+// Endpoint для поиска недвижимости по параметрам
+router.get('/search', async (req, res) => {
+  try {
+    console.log('Search request received with query:', req.query);
+    
+    // Извлекаем все возможные параметры поиска
+    const { 
+      mode, 
+      type, 
+      rooms, 
+      priceFrom, 
+      priceTo, 
+      address,
+      city
+    } = req.query;
+
+    // Проверка общего количества объектов
+    const totalCount = await prisma.property.count({
+      where: { status: 'active' }
+    });
+    console.log(`Total active properties count: ${totalCount}`);
+
+    // Базовое условие - только активные объявления
+    let whereConditions: any = {
+      status: 'active'
+    };
+
+    // Режим поиска (покупка/аренда)
+    if (mode === 'buy') {
+      whereConditions = {
+        ...whereConditions,
+        transaction_type: {
+          name: {
+            contains: 'прода',
+            mode: 'insensitive'
+          }
+        }
+      };
+    } else if (mode === 'rent') {
+      whereConditions = {
+        ...whereConditions,
+        transaction_type: {
+          name: {
+            contains: 'аренд',
+            mode: 'insensitive'
+          }
+        }
+      };
+    }
+
+    // Тип недвижимости
+    if (type === 'apartment') {
+      whereConditions = {
+        ...whereConditions,
+        property_type: {
+          name: {
+            contains: 'квартир',
+            mode: 'insensitive'
+          }
+        }
+      };
+    } else if (type === 'house') {
+      whereConditions = {
+        ...whereConditions,
+        OR: [
+          { is_country: true },
+          {
+            property_type: {
+              name: {
+                contains: 'дом',
+                mode: 'insensitive'
+              }
+            }
+          }
+        ]
+      };
+    } else if (type === 'commercial') {
+      whereConditions = {
+        ...whereConditions,
+        is_commercial: true
+      };
+    } else if (type === 'land') {
+      whereConditions = {
+        ...whereConditions,
+        property_type: {
+          name: {
+            contains: 'участ',
+            mode: 'insensitive'
+          }
+        }
+      };
+    }
+
+    // Количество комнат
+    if (rooms) {
+      if (rooms === 'studio') {
+        whereConditions = {
+          ...whereConditions,
+          rooms: 0
+        };
+      } else if (rooms === '4+') {
+        whereConditions = {
+          ...whereConditions,
+          rooms: { gte: 4 }
+        };
+      } else {
+        whereConditions = {
+          ...whereConditions,
+          rooms: parseInt(rooms as string, 10)
+        };
+      }
+    }
+
+    // Диапазон цены
+    if (priceFrom || priceTo) {
+      const priceCondition: any = {};
+      
+      if (priceFrom) {
+        priceCondition.gte = parseFloat(priceFrom as string);
+      }
+      
+      if (priceTo) {
+        priceCondition.lte = parseFloat(priceTo as string);
+      }
+      
+      whereConditions = {
+        ...whereConditions,
+        price: priceCondition
+      };
+    }
+
+    // Адрес (простой поиск)
+    if (address) {
+      whereConditions = {
+        ...whereConditions,
+        address: {
+          contains: address as string,
+          mode: 'insensitive'
+        }
+      };
+    }
+
+    // Город
+    if (city) {
+      whereConditions = {
+        ...whereConditions,
+        city: {
+          name: {
+            contains: city as string,
+            mode: 'insensitive'
+          }
+        }
+      };
+    }
+
+    // Выводим для отладки
+    console.log('Final search conditions:', JSON.stringify(whereConditions, null, 2));
+
+    // Выполняем поиск
+    const properties = await prisma.property.findMany({
+      where: whereConditions,
+      include: {
+        user: {
+          select: {
+            id: true,
+            first_name: true,
+            last_name: true,
+            phone: true,
+          },
+        },
+        property_type: true,
+        transaction_type: true,
+        city: true,
+        district: true,
+        metro_station: true,
+        images: true,
+      },
+      orderBy: {
+        created_at: 'desc'
+      },
+      take: 100, // Ограничиваем количество результатов
+    });
+
+    console.log(`Search found ${properties.length} properties`);
+    
+    if (properties.length === 0) {
+      console.log("No properties found, showing debug info:");
+      console.log("Query parameters:", req.query);
+      console.log("Where conditions:", JSON.stringify(whereConditions, null, 2));
+      
+      // Для отладки: попробуем найти все активные объекты
+      const allActive = await prisma.property.findMany({
+        where: { status: 'active' },
+        select: { id: true, title: true, property_type: { select: { name: true } }, transaction_type: { select: { name: true } } },
+        take: 5
+      });
+      
+      console.log(`First 5 active properties for reference:`, JSON.stringify(allActive, null, 2));
+    }
+    
+    res.json(properties);
+  } catch (error) {
+    console.error('Error searching properties:', error);
+    res.status(500).json({ error: 'Failed to search properties' });
+  }
+});
+
 // Get property by ID - ВАЖНО: этот маршрут должен быть последним, чтобы не перехватывать другие маршруты!
 router.get('/:id', async (req, res) => {
   try {

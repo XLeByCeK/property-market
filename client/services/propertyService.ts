@@ -548,4 +548,22 @@ export const updateProperty = async (id: number, propertyData: PropertyFormData)
     console.error('Error updating property:', error);
     throw error;
   }
+};
+
+// Поиск недвижимости с параметрами
+export const searchProperties = async (params: Record<string, any>): Promise<Property[]> => {
+  try {
+    console.log('Searching properties with params:', params);
+    const data = await api.properties.search(params) as PropertyFromAPI[];
+    if (!data || !Array.isArray(data)) {
+      console.error('Invalid search response format:', data);
+      return [];
+    }
+    console.log(`Got ${data.length} properties from search`);
+    return data.map(mapPropertyFromAPI);
+  } catch (error) {
+    console.error('Error searching properties:', error);
+    // Возвращаем пустой массив вместо ошибки
+    return [];
+  }
 }; 

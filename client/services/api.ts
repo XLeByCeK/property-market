@@ -241,6 +241,13 @@ export const api = {
         method: 'GET',
         url: `/properties/favorites/check/${propertyId}`,
       }),
+      
+    search: (params: any) => 
+      apiRequest({
+        method: 'GET',
+        url: '/properties/search',
+        params,
+      }),
   },
   
   // Chat/Messages
