@@ -64,7 +64,6 @@ export const SearchBanner: React.FC<SearchBannerProps> = ({
   
   // UI state
   const [isMobile, setIsMobile] = useState(false);
-  const [showAdvancedOptions, setShowAdvancedOptions] = useState(false);
   
   // Data for dropdowns
   const [propertyTypes, setPropertyTypes] = useState<PropertyType[]>([]);
@@ -256,16 +255,12 @@ export const SearchBanner: React.FC<SearchBannerProps> = ({
     });
   };
 
-  const toggleAdvancedOptions = () => {
-    setShowAdvancedOptions(!showAdvancedOptions);
-  };
-
   const renderSearchInputs = () => {
     switch (searchMode) {
       case 'daily':
         return (
           <>
-            <div className="search-inputs-row">
+            <div className="search-inputs-row daily-row">
               <select 
                 className="search-input"
                 value={propertyType}
@@ -287,9 +282,7 @@ export const SearchBanner: React.FC<SearchBannerProps> = ({
                   <option key={option.value} value={option.value}>{option.label}</option>
                 ))}
               </select>
-            </div>
-            
-            <div className="search-inputs-row">
+               
               <input
                 type="date"
                 className="search-input"
@@ -305,117 +298,31 @@ export const SearchBanner: React.FC<SearchBannerProps> = ({
                 value={checkOut}
                 onChange={(e) => setCheckOut(e.target.value)}
               />
-            </div>
-
-            <div className="search-inputs-row">
-              <div className="price-inputs">
-                <input
-                  type="text"
-                  className="search-input"
-                  placeholder="Цена от"
-                  value={priceFrom}
-                  onChange={(e) => setPriceFrom(e.target.value)}
-                />
-                <input
-                  type="text"
-                  className="search-input"
-                  placeholder="Цена до"
-                  value={priceTo}
-                  onChange={(e) => setPriceTo(e.target.value)}
-                />
-              </div>
               
               <input
                 type="text"
-                className="search-input"
+                className="search-input price-input"
+                placeholder="Цена от"
+                value={priceFrom}
+                onChange={(e) => setPriceFrom(e.target.value)}
+              />
+              
+              <input
+                type="text"
+                className="search-input price-input"
+                placeholder="Цена до"
+                value={priceTo}
+                onChange={(e) => setPriceTo(e.target.value)}
+              />
+              
+              <input
+                type="text"
+                className="search-input address-input"
                 placeholder="Адрес"
                 value={address}
                 onChange={(e) => setAddress(e.target.value)}
               />
             </div>
-            
-            {showAdvancedOptions && (
-              <div className="advanced-search-options">
-                <div className="search-inputs-row">
-                  <select
-                    className="search-input"
-                    value={selectedCityId}
-                    onChange={(e) => setSelectedCityId(e.target.value)}
-                  >
-                    <option value="">Выберите город</option>
-                    {cities.map(city => (
-                      <option key={city.id} value={city.id.toString()}>{city.name}</option>
-                    ))}
-                  </select>
-                  
-                  <select
-                    className="search-input"
-                    value={districtId}
-                    onChange={(e) => setDistrictId(e.target.value)}
-                    disabled={!selectedCityId || districts.length === 0}
-                  >
-                    <option value="">Выберите район</option>
-                    {districts.map(district => (
-                      <option key={district.id} value={district.id.toString()}>{district.name}</option>
-                    ))}
-                  </select>
-                </div>
-                
-                <div className="search-inputs-row">
-                  <select
-                    className="search-input"
-                    value={metroId}
-                    onChange={(e) => setMetroId(e.target.value)}
-                    disabled={!selectedCityId || metroStations.length === 0}
-                  >
-                    <option value="">Выберите метро</option>
-                    {metroStations.map(station => (
-                      <option key={station.id} value={station.id.toString()}>{station.name}</option>
-                    ))}
-                  </select>
-                  
-                  <input
-                    type="text"
-                    className="search-input"
-                    placeholder="Расстояние до метро (м)"
-                    value={metroDistance}
-                    onChange={(e) => setMetroDistance(e.target.value)}
-                    disabled={!metroId}
-                  />
-                </div>
-                
-                <div className="search-inputs-row">
-                  <div className="checkbox-group">
-                    <label>
-                      <input
-                        type="checkbox"
-                        checked={isNewBuilding}
-                        onChange={(e) => setIsNewBuilding(e.target.checked)}
-                      />
-                      Новостройка
-                    </label>
-                    
-                    <label>
-                      <input
-                        type="checkbox"
-                        checked={isCommercial}
-                        onChange={(e) => setIsCommercial(e.target.checked)}
-                      />
-                      Коммерческая
-                    </label>
-                    
-                    <label>
-                      <input
-                        type="checkbox"
-                        checked={isCountry}
-                        onChange={(e) => setIsCountry(e.target.checked)}
-                      />
-                      Загородная
-                    </label>
-                  </div>
-                </div>
-              </div>
-            )}
           </>
         );
       default:
@@ -443,6 +350,14 @@ export const SearchBanner: React.FC<SearchBannerProps> = ({
                   <option key={option.value} value={option.value}>{option.label}</option>
                 ))}
               </select>
+              
+              <input
+                type="text"
+                className="search-input address-input"
+                placeholder="Адрес"
+                value={address}
+                onChange={(e) => setAddress(e.target.value)}
+              />
             </div>
 
             <div className="search-inputs-row">
@@ -462,134 +377,7 @@ export const SearchBanner: React.FC<SearchBannerProps> = ({
                   onChange={(e) => setPriceTo(e.target.value)}
                 />
               </div>
-
-              <input
-                type="text"
-                className="search-input"
-                placeholder="Адрес"
-                value={address}
-                onChange={(e) => setAddress(e.target.value)}
-              />
             </div>
-            
-            {showAdvancedOptions && (
-              <div className="advanced-search-options">
-                <div className="search-inputs-row">
-                  <select
-                    className="search-input"
-                    value={selectedCityId}
-                    onChange={(e) => setSelectedCityId(e.target.value)}
-                  >
-                    <option value="">Выберите город</option>
-                    {cities.map(city => (
-                      <option key={city.id} value={city.id.toString()}>{city.name}</option>
-                    ))}
-                  </select>
-                  
-                  <select
-                    className="search-input"
-                    value={districtId}
-                    onChange={(e) => setDistrictId(e.target.value)}
-                    disabled={!selectedCityId || districts.length === 0}
-                  >
-                    <option value="">Выберите район</option>
-                    {districts.map(district => (
-                      <option key={district.id} value={district.id.toString()}>{district.name}</option>
-                    ))}
-                  </select>
-                </div>
-                
-                <div className="search-inputs-row">
-                  <select
-                    className="search-input"
-                    value={metroId}
-                    onChange={(e) => setMetroId(e.target.value)}
-                    disabled={!selectedCityId || metroStations.length === 0}
-                  >
-                    <option value="">Выберите метро</option>
-                    {metroStations.map(station => (
-                      <option key={station.id} value={station.id.toString()}>{station.name}</option>
-                    ))}
-                  </select>
-                  
-                  <input
-                    type="text"
-                    className="search-input"
-                    placeholder="Расстояние до метро (м)"
-                    value={metroDistance}
-                    onChange={(e) => setMetroDistance(e.target.value)}
-                    disabled={!metroId}
-                  />
-                </div>
-                
-                <div className="search-inputs-row">
-                  <div className="area-inputs">
-                    <input
-                      type="text"
-                      className="search-input"
-                      placeholder="Площадь от"
-                      value={areaFrom}
-                      onChange={(e) => setAreaFrom(e.target.value)}
-                    />
-                    <input
-                      type="text"
-                      className="search-input"
-                      placeholder="Площадь до"
-                      value={areaTo}
-                      onChange={(e) => setAreaTo(e.target.value)}
-                    />
-                  </div>
-                  
-                  <div className="floor-inputs">
-                    <input
-                      type="text"
-                      className="search-input"
-                      placeholder="Этаж"
-                      value={floor}
-                      onChange={(e) => setFloor(e.target.value)}
-                    />
-                    <input
-                      type="text"
-                      className="search-input"
-                      placeholder="Этажей в доме"
-                      value={totalFloors}
-                      onChange={(e) => setTotalFloors(e.target.value)}
-                    />
-                  </div>
-                </div>
-                
-                <div className="search-inputs-row">
-                  <div className="checkbox-group">
-                    <label>
-                      <input
-                        type="checkbox"
-                        checked={isNewBuilding}
-                        onChange={(e) => setIsNewBuilding(e.target.checked)}
-                      />
-                      Новостройка
-                    </label>
-                    
-                    <label>
-                      <input
-                        type="checkbox"
-                        checked={isCommercial}
-                        onChange={(e) => setIsCommercial(e.target.checked)}
-                      />
-                      Коммерческая
-                    </label>
-                    
-                    <label>
-                      <input
-                        type="checkbox"
-                        checked={isCountry}
-                        onChange={(e) => setIsCountry(e.target.checked)}
-                      />
-                      Загородная
-                    </label>
-                  </div>
-                </div>
-              </div>
-            )}
           </>
         );
     }
@@ -640,16 +428,6 @@ export const SearchBanner: React.FC<SearchBannerProps> = ({
           <div className="search-banner-form">
             <div className="search-inputs">
               {renderSearchInputs()}
-              
-              <div className="advanced-options-toggle">
-                <button 
-                  type="button" 
-                  className="toggle-button"
-                  onClick={toggleAdvancedOptions}
-                >
-                  {showAdvancedOptions ? 'Скрыть дополнительные параметры' : 'Показать больше параметров'}
-                </button>
-              </div>
             </div>
 
             <div className="search-buttons">
@@ -678,14 +456,64 @@ export const SearchBanner: React.FC<SearchBannerProps> = ({
           width: 100%;
         }
         
-        .price-inputs, .area-inputs, .floor-inputs {
+        .daily-row {
+          flex-wrap: nowrap;
+          width: 100%;
+          justify-content: space-between;
+        }
+        
+        .daily-row .search-input {
+          flex: 1;
+          min-width: 0;
+          font-size: 12px;
+        }
+        
+        .daily-row .price-input {
+          flex: 0.2; /* Радикально уменьшаем поля цены */
+          font-size: 10px;
+          padding: 5px;
+          min-width: 60px;
+        }
+        
+        .daily-row select {
+          flex: 0.7;
+          font-size: 12px;
+          padding: 5px;
+        }
+        
+        .daily-row input[type="date"] {
+          flex: 0.5;
+          font-size: 10px;
+          padding: 5px;
+          min-width: 85px;
+        }
+        
+        .daily-row .address-input {
+          flex: 1.5;
+          min-width: 120px;
+        }
+        
+        .price-inputs, .area-inputs, .floor-inputs, .date-inputs {
           display: flex;
           gap: 5px;
           flex: 1;
         }
         
-        .price-inputs input, .area-inputs input, .floor-inputs input {
+        .price-inputs input, .area-inputs input, .floor-inputs input, .date-inputs input {
           flex: 1;
+        }
+        
+        .date-inputs {
+          flex: 1.5;
+        }
+        
+        .price-inputs {
+          flex: 1.2;
+        }
+        
+        .date-input, .price-input {
+          min-width: 0;
+          font-size: 13px;
         }
         
         .advanced-search-options {
@@ -766,6 +594,39 @@ export const SearchBanner: React.FC<SearchBannerProps> = ({
           .search-inputs-row {
             flex-direction: column;
             gap: 8px;
+          }
+          
+          /* Исключение для первой строки с основными параметрами */
+          .search-banner-form .search-inputs-row:first-child {
+            flex-direction: row;
+            flex-wrap: wrap;
+            gap: 5px;
+          }
+          
+          .search-banner-form .search-inputs-row:first-child .search-input {
+            flex: 1 1 auto;
+            min-width: 30%;
+          }
+          
+          /* Специальные стили для строки в режиме посуточной аренды */
+          .daily-row {
+            flex-wrap: wrap;
+          }
+          
+          .daily-row .search-input {
+            flex: 1 1 30%;
+            min-width: 100px;
+            margin-bottom: 5px;
+          }
+          
+          .daily-row .price-input {
+            flex: 1 1 20%;
+            min-width: 80px;
+          }
+          
+          .daily-row .address-input {
+            flex: 1 1 45%;
+            min-width: 150px;
           }
           
           .checkbox-group {
