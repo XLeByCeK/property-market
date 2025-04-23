@@ -6,11 +6,13 @@ import { PropertyImageCarousel } from '../../components/property/PropertyImageCa
 import { PropertyInfo } from '../../components/property/PropertyInfo';
 import { PropertyContactCard } from '../../components/property/PropertyContactCard';
 import { YandexMap } from '../../components/property/YandexMap';
-import { getPropertyById, PropertyDetails } from '../../services/propertyService';
+import { getPropertyById, PropertyDetails, recordPropertyView } from '../../services/propertyService';
+import { useAuth } from '../../context/AuthContext';
 
 const PropertyPage = () => {
   const router = useRouter();
   const { id } = router.query;
+  const { isAuthenticated } = useAuth();
   
   const [property, setProperty] = useState<PropertyDetails | null>(null);
   const [loading, setLoading] = useState(true);
@@ -31,6 +33,11 @@ const PropertyPage = () => {
         const propertyData = await getPropertyById(Number(propertyId)) as PropertyDetails;
         setProperty(propertyData);
         
+        // Record view history only if user is authenticated
+        if (isAuthenticated) {
+          await recordPropertyView(Number(propertyId));
+        }
+        
         // Also fetch additional data like property features, etc.
         
       } catch (error) {
@@ -42,7 +49,7 @@ const PropertyPage = () => {
     };
     
     fetchPropertyData();
-  }, [id]);
+  }, [id, isAuthenticated]);
   
   // Extracted the mock data creation to a separate function
   const loadMockData = (propertyId: string | number) => {

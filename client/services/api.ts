@@ -248,6 +248,19 @@ export const api = {
         url: '/properties/search',
         params,
       }),
+      
+    // Add new view history methods
+    recordView: (propertyId: number) =>
+      apiRequest({
+        method: 'POST',
+        url: `/properties/view/${propertyId}`,
+      }),
+      
+    getViewHistory: () =>
+      apiRequest({
+        method: 'GET',
+        url: '/properties/view-history',
+      }),
   },
   
   // Chat/Messages

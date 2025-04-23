@@ -927,6 +927,153 @@ router.get('/search', async (req, res) => {
   }
 });
 
+// Get user's view history (only for authenticated users)
+router.get('/view-history', authenticateToken, async (req, res) => {
+  try {
+    console.log('GET /properties/view-history - начало обработки запроса');
+    
+    // Check if user is authenticated
+    if (!req.user || !req.user.id) {
+      console.log('GET /properties/view-history - ошибка: пользователь не аутентифицирован');
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+    
+    const userId = req.user.id;
+    console.log(`GET /properties/view-history - запрос для пользователя ID: ${userId}`);
+    
+    // Получаем просмотры пользователя
+    const viewHistory = await prisma.view_history.findMany({
+      where: {
+        user_id: userId
+      },
+      orderBy: {
+        viewed_at: 'desc'
+      },
+      include: {
+        property: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                first_name: true,
+                last_name: true,
+                phone: true
+              }
+            },
+            property_type: true,
+            transaction_type: true,
+            city: true,
+            district: true,
+            metro_station: true,
+            images: true
+          }
+        }
+      }
+    });
+    
+    console.log(`Найдено ${viewHistory.length} записей в истории просмотров`);
+    
+    if (viewHistory.length === 0) {
+      console.log('История просмотров пуста');
+      return res.status(200).json([]);
+    }
+    
+    // Создаем Map для хранения только последних просмотров для каждого объекта
+    const latestViewsMap = new Map();
+    
+    // Проходим по всем просмотрам и сохраняем только последний для каждого объекта
+    for (const view of viewHistory) {
+      const propertyId = view.property_id;
+      
+      if (!latestViewsMap.has(propertyId) || 
+          new Date(view.viewed_at) > new Date(latestViewsMap.get(propertyId).viewed_at)) {
+        latestViewsMap.set(propertyId, view);
+      }
+    }
+    
+    // Преобразуем Map в массив и извлекаем данные объектов
+    const propertiesWithViewTime = Array.from(latestViewsMap.values())
+      .map(view => ({
+        ...view.property,
+        viewed_at: view.viewed_at
+      }))
+      .sort((a, b) => {
+        return new Date(b.viewed_at).getTime() - new Date(a.viewed_at).getTime();
+      });
+    
+    console.log(`Отправка ${propertiesWithViewTime.length} уникальных объектов в ответе`);
+    res.status(200).json(propertiesWithViewTime);
+  } catch (error) {
+    console.error('Error fetching view history:', error);
+    res.status(500).json({ error: 'Failed to fetch view history' });
+  }
+});
+
+// Record view history for a property (only for authenticated users)
+router.post('/view/:id', authenticateToken, async (req, res) => {
+  try {
+    const propertyId = parseInt(req.params.id);
+    
+    // Check if user is authenticated
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+    
+    const userId = req.user.id;
+    
+    // Verify the property exists
+    const property = await prisma.property.findUnique({
+      where: { id: propertyId }
+    });
+    
+    if (!property) {
+      return res.status(404).json({ error: 'Property not found' });
+    }
+    
+    // Проверка на существование недавней записи о просмотре
+    // Ищем запись за последние 10 минут
+    const tenMinutesAgo = new Date(new Date().getTime() - 10 * 60 * 1000);
+    
+    const recentView = await prisma.view_history.findFirst({
+      where: {
+        user_id: userId,
+        property_id: propertyId,
+        viewed_at: {
+          gte: tenMinutesAgo
+        }
+      }
+    });
+    
+    // Если уже есть недавняя запись, не создаем новую
+    if (recentView) {
+      console.log(`Recent view found for user ${userId} and property ${propertyId}, skipping`);
+      return res.status(200).json({
+        success: true,
+        message: 'View already recorded'
+      });
+    }
+    
+    // Add to view history
+    const viewRecord = await prisma.view_history.create({
+      data: {
+        user_id: userId,
+        property_id: propertyId,
+        viewed_at: new Date()
+      }
+    });
+    
+    console.log(`View recorded: user ${userId}, property ${propertyId}`);
+    
+    res.status(200).json({
+      success: true,
+      message: 'View recorded successfully'
+    });
+  } catch (error) {
+    console.error('Error recording view history:', error);
+    res.status(500).json({ error: 'Failed to record view history' });
+  }
+});
+
 // Get property by ID - ВАЖНО: этот маршрут должен быть последним, чтобы не перехватывать другие маршруты!
 router.get('/:id', async (req, res) => {
   try {

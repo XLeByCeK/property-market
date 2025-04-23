@@ -553,78 +553,92 @@ export const updateProperty = async (id: number, propertyData: PropertyFormData)
 // Поиск недвижимости с параметрами
 export const searchProperties = async (params: Record<string, any>): Promise<Property[]> => {
   try {
-    console.log('======= SEARCH DEBUG INFO =======');
-    console.log('Original search params:', params);
-    
-    // Клонируем параметры для возможных модификаций
-    const searchParams = { ...params };
-    
-    // Исправляем параметры поиска для соответствия с бэкендом
-    if (searchParams.type) {
-      console.log(`Searching by property type: ${searchParams.type}`);
-      
-      // Используем параметр type напрямую, так как сервер теперь корректно его обрабатывает
-      
-      switch (searchParams.type) {
-        case 'apartment':
-          // Для квартир сервер теперь корректно фильтрует с учетом is_country = false
-          searchParams.property_type_id = 4;
-          break;
-          
-        case 'house':
-          // Для домов сервер теперь корректно фильтрует с учетом is_country = true
-          searchParams.property_type_id = 2;
-          break;
-          
-        case 'townhouse':
-          // Для таунхаусов
-          searchParams.property_type_id = 1;
-          break;
-          
-        case 'villa':
-          // Для вилл
-          searchParams.property_type_id = 3;
-          break;
-          
-        case 'commercial':
-          // Для коммерческой недвижимости
-          searchParams.is_commercial = true;
-          break;
-      }
-    }
-    
-    console.log('Modified search params:', searchParams);
-    
-    // Построение URL-адреса для отладки
-    const queryString = Object.entries(searchParams)
-      .map(([key, value]) => `${key}=${encodeURIComponent(String(value))}`)
-      .join('&');
-    console.log(`🔍 Search URL: ${API_URL}/properties/search?${queryString}`);
-    console.log('================================');
-    
-    // Получаем результаты от сервера
-    const data = await api.properties.search(searchParams) as PropertyFromAPI[];
-    
+    const data = await api.properties.search(params);
     if (!data || !Array.isArray(data)) {
-      console.error('Invalid search response format:', data);
       return [];
     }
-    
-    // Добавим дополнительное логирование для отладки
-    if (data.length === 0) {
-      console.log('No properties found with these parameters');
-    } else {
-      console.log('Property types found in results:');
-      const propertyTypes = Array.from(new Set(data.map(p => `${p.property_type.name} (ID: ${p.property_type.id})`)));
-      propertyTypes.forEach(type => console.log(`- ${type}`));
-    }
-    
-    // Дополнительная фильтрация больше не требуется, так как сервер правильно фильтрует
-    console.log(`Got ${data.length} properties from search`);
     return data.map(mapPropertyFromAPI);
   } catch (error) {
     console.error('Error searching properties:', error);
-    // Возвращаем пустой массив вместо ошибки
+    return [];
+  }
+};
+
+// Record property view history for logged-in user
+export const recordPropertyView = async (propertyId: number): Promise<boolean> => {
+  try {
+    // Check if user is logged in
+    const token = localStorage.getItem('token');
+    if (!token) {
+      console.log('User not logged in, skipping view history recording');
+      return false;
+    }
+    
+    // Добавляем дебаунс, чтобы избежать дублирования записей
+    // Используем localStorage для отслеживания последних просмотров
+    const viewedKey = `property_viewed_${propertyId}`;
+    const lastViewed = localStorage.getItem(viewedKey);
+    const now = new Date().getTime();
+    
+    // Если свойство уже было просмотрено в течение последних 10 минут, не записываем повторно
+    if (lastViewed && (now - parseInt(lastViewed)) < 10 * 60 * 1000) {
+      console.log('Property was viewed recently, skipping duplicate record');
+      return true;
+    }
+    
+    // Записываем новый просмотр в БД
+    await api.properties.recordView(propertyId);
+    
+    // Сохраняем время просмотра в localStorage
+    localStorage.setItem(viewedKey, now.toString());
+    
+    return true;
+  } catch (error) {
+    console.error('Error recording property view:', error);
+    return false;
+  }
+};
+
+// Get user's view history
+export const getViewHistory = async (): Promise<Property[]> => {
+  try {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      console.log('User not logged in, cannot fetch view history');
+      return [];
+    }
+    
+    console.log('Fetching view history from API...');
+    const data = await api.properties.getViewHistory();
+    console.log('View history data received:', data);
+    
+    if (!data) {
+      console.error('Received empty response for view history');
+      return [];
+    }
+    
+    if (!Array.isArray(data)) {
+      console.error('Received non-array response for view history:', typeof data, data);
+      return [];
+    }
+    
+    if (data.length === 0) {
+      console.log('No view history found');
+      return [];
+    }
+    
+    console.log(`Mapping ${data.length} view history items to UI format`);
+    const mappedData = data.map(mapPropertyFromAPI);
+    console.log('Mapped view history:', mappedData);
+    
+    return mappedData;
+  } catch (error: any) {
+    console.error('Error fetching view history:', error);
+    // Проверяем, есть ли информация об ответе сервера
+    if (error.response) {
+      console.error('Server response status:', error.response.status);
+      console.error('Server response data:', error.response.data);
+    }
     return [];
   }
 }; 
