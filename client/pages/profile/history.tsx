@@ -30,37 +30,52 @@ const ProfileHistoryPage: NextPage = () => {
       if (isAuthenticated) {
         setHistoryLoading(true);
         setErrorMessage(null);
+        
         try {
           console.log('Запрос истории просмотров...');
-          const history = await getViewHistory();
-          console.log('Получена история просмотров:', history);
           
-          if (history && Array.isArray(history)) {
-            console.log(`Найдено ${history.length} записей в истории просмотров`);
-            setViewHistory(history);
-          } else {
-            console.error('Получены неверные данные истории:', history);
-            setViewHistory([]);
-            setErrorMessage('Не удалось получить данные истории просмотров');
+          // Добавляем небольшую задержку перед запросом для обеспечения корректного состояния авторизации
+          await new Promise<void>((resolve) => {
+            setTimeout(() => resolve(), 500);
+          });
+          
+          try {
+            const history = await getViewHistory();
+            console.log('Получена история просмотров:', history);
+            
+            if (history && Array.isArray(history)) {
+              console.log(`Найдено ${history.length} записей в истории просмотров`);
+              setViewHistory(history);
+            } else {
+              console.error('Получены неверные данные истории:', history);
+              setViewHistory([]);
+              setErrorMessage('Не удалось получить данные истории просмотров');
+            }
+          } catch (error: any) {
+            handleViewHistoryError(error);
           }
         } catch (error: any) {
-          console.error('Error fetching view history:', error);
-          setViewHistory([]);
-          
-          // Получаем подробную информацию об ошибке
-          if (error.response) {
-            console.error('Ошибка ответа сервера:', error.response.status, error.response.data);
-            setErrorMessage(`Ошибка сервера: ${error.response.status}. Пожалуйста, попробуйте позже.`);
-          } else if (error.request) {
-            console.error('Нет ответа от сервера:', error.request);
-            setErrorMessage('Нет ответа от сервера. Проверьте подключение к интернету.');
-          } else {
-            console.error('Ошибка запроса:', error.message);
-            setErrorMessage(`Ошибка: ${error.message}`);
-          }
+          handleViewHistoryError(error);
         } finally {
           setHistoryLoading(false);
         }
+      }
+    };
+    
+    const handleViewHistoryError = (error: any) => {
+      console.error('Error fetching view history:', error);
+      setViewHistory([]);
+      
+      // Получаем подробную информацию об ошибке
+      if (error.response) {
+        console.error('Ошибка ответа сервера:', error.response.status, error.response.data);
+        setErrorMessage(`Ошибка сервера: ${error.response.status}. ${error.response.data?.error || 'Пожалуйста, попробуйте позже.'}`);
+      } else if (error.request) {
+        console.error('Нет ответа от сервера:', error.request);
+        setErrorMessage('Нет ответа от сервера. Проверьте подключение к интернету.');
+      } else {
+        console.error('Ошибка запроса:', error.message);
+        setErrorMessage(`Ошибка: ${error.message}`);
       }
     };
 

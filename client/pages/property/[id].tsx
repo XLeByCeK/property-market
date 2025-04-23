@@ -34,9 +34,7 @@ const PropertyPage = () => {
         setProperty(propertyData);
         
         // Record view history only if user is authenticated
-        if (isAuthenticated) {
-          await recordPropertyView(Number(propertyId));
-        }
+        // Используем отдельный эффект для записи просмотра, чтобы избежать повторных записей
         
         // Also fetch additional data like property features, etc.
         
@@ -49,7 +47,24 @@ const PropertyPage = () => {
     };
     
     fetchPropertyData();
-  }, [id, isAuthenticated]);
+  }, [id]); // Убираем зависимость от isAuthenticated
+  
+  // Отдельный эффект для записи просмотра
+  useEffect(() => {
+    // Записываем просмотр только один раз после загрузки данных
+    const recordView = async () => {
+      if (!isAuthenticated || !property) return;
+      
+      try {
+        console.log(`Запись просмотра объекта ID: ${property.id}`);
+        await recordPropertyView(property.id);
+      } catch (error) {
+        console.error('Ошибка при записи просмотра:', error);
+      }
+    };
+    
+    recordView();
+  }, [isAuthenticated, property]);
   
   // Extracted the mock data creation to a separate function
   const loadMockData = (propertyId: string | number) => {

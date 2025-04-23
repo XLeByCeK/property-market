@@ -1012,14 +1012,17 @@ router.get('/view-history', authenticateToken, async (req, res) => {
 // Record view history for a property (only for authenticated users)
 router.post('/view/:id', authenticateToken, async (req, res) => {
   try {
+    console.log('Запрос на запись просмотра объекта');
     const propertyId = parseInt(req.params.id);
     
     // Check if user is authenticated
     if (!req.user || !req.user.id) {
+      console.log('Пользователь не аутентифицирован, отклоняем запись просмотра');
       return res.status(401).json({ error: 'Unauthorized' });
     }
     
     const userId = req.user.id;
+    console.log(`Запись просмотра для пользователя ${userId}, объект ${propertyId}`);
     
     // Verify the property exists
     const property = await prisma.property.findUnique({
@@ -1027,33 +1030,43 @@ router.post('/view/:id', authenticateToken, async (req, res) => {
     });
     
     if (!property) {
+      console.log(`Объект ${propertyId} не найден`);
       return res.status(404).json({ error: 'Property not found' });
     }
     
-    // Проверка на существование недавней записи о просмотре
-    // Ищем запись за последние 10 минут
-    const tenMinutesAgo = new Date(new Date().getTime() - 10 * 60 * 1000);
+    // Проверка на существование записи просмотра за последние сутки
+    const oneDayAgo = new Date(new Date().getTime() - 24 * 60 * 60 * 1000);
+    console.log(`Проверка наличия просмотра с ${oneDayAgo.toISOString()}`);
     
     const recentView = await prisma.view_history.findFirst({
       where: {
         user_id: userId,
         property_id: propertyId,
         viewed_at: {
-          gte: tenMinutesAgo
+          gte: oneDayAgo
         }
       }
     });
     
-    // Если уже есть недавняя запись, не создаем новую
+    // Если уже есть запись за последние сутки, обновляем её
     if (recentView) {
-      console.log(`Recent view found for user ${userId} and property ${propertyId}, skipping`);
+      console.log(`Найден недавний просмотр ID: ${recentView.id}, обновляем время`);
+      
+      const updatedView = await prisma.view_history.update({
+        where: { id: recentView.id },
+        data: { viewed_at: new Date() }
+      });
+      
       return res.status(200).json({
         success: true,
-        message: 'View already recorded'
+        message: 'View record updated',
+        updated: true,
+        record: updatedView
       });
     }
     
-    // Add to view history
+    // Создаем новую запись просмотра
+    console.log('Недавний просмотр не найден, создаем новую запись');
     const viewRecord = await prisma.view_history.create({
       data: {
         user_id: userId,
@@ -1062,11 +1075,13 @@ router.post('/view/:id', authenticateToken, async (req, res) => {
       }
     });
     
-    console.log(`View recorded: user ${userId}, property ${propertyId}`);
+    console.log(`Новая запись просмотра создана, ID: ${viewRecord.id}`);
     
-    res.status(200).json({
+    res.status(201).json({
       success: true,
-      message: 'View recorded successfully'
+      message: 'View recorded successfully',
+      updated: false,
+      record: viewRecord
     });
   } catch (error) {
     console.error('Error recording view history:', error);

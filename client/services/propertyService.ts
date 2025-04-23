@@ -574,24 +574,24 @@ export const recordPropertyView = async (propertyId: number): Promise<boolean> =
       return false;
     }
     
-    // Добавляем дебаунс, чтобы избежать дублирования записей
-    // Используем localStorage для отслеживания последних просмотров
-    const viewedKey = `property_viewed_${propertyId}`;
-    const lastViewed = localStorage.getItem(viewedKey);
-    const now = new Date().getTime();
+    // Используем sessionStorage для дедупликации в рамках текущей сессии браузера
+    // Это позволит избежать дублирования запросов при перерендеринге компонентов
+    const viewedKey = `property_viewed_${propertyId}_session`;
+    const sessionViewed = sessionStorage.getItem(viewedKey);
     
-    // Если свойство уже было просмотрено в течение последних 10 минут, не записываем повторно
-    if (lastViewed && (now - parseInt(lastViewed)) < 10 * 60 * 1000) {
-      console.log('Property was viewed recently, skipping duplicate record');
+    if (sessionViewed) {
+      console.log('Property was already recorded in this session, skipping');
       return true;
     }
     
-    // Записываем новый просмотр в БД
-    await api.properties.recordView(propertyId);
+    // Отмечаем в sessionStorage, что объект был просмотрен в этой сессии
+    sessionStorage.setItem(viewedKey, 'true');
     
-    // Сохраняем время просмотра в localStorage
-    localStorage.setItem(viewedKey, now.toString());
+    // Делаем запрос к серверу для записи просмотра
+    console.log(`Отправка запроса на запись просмотра объекта ${propertyId}...`);
+    const response = await api.properties.recordView(propertyId);
     
+    console.log('Ответ сервера на запись просмотра:', response);
     return true;
   } catch (error) {
     console.error('Error recording property view:', error);
