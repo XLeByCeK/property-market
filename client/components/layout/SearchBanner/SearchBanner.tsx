@@ -420,7 +420,7 @@ export const SearchBanner: React.FC<SearchBannerProps> = ({
             </button>
           </div>
           <div className="action-buttons-row">
-            <button className="action-button">Оценить</button>
+            <button className="action-button" onClick={() => router.push('/evaluate')}>Оценить</button>
             <button className="action-button">Ипотека</button>
             <button className="action-button">Подбор риелтора</button>
             <button className="action-button primary">Выставить объявление</button>
