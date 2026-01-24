@@ -2,22 +2,29 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import '../styles/globals.css';
 import type { AppProps } from 'next/app';
 import { useEffect } from 'react';
+
 import { CityProvider } from '../context/CityContext';
 import { AuthProvider } from '../context/AuthContext';
+import { AiAssistantProvider } from '../context/AiAssistantContext';
+
+import { Layout } from '../components/layout/Layout';
 
 function MyApp({ Component, pageProps }: AppProps) {
   useEffect(() => {
-    // Import bootstrap JavaScript only on the client side
     require('bootstrap/dist/js/bootstrap.bundle.min.js');
   }, []);
 
   return (
     <AuthProvider>
       <CityProvider>
-        <Component {...pageProps} />
+        <AiAssistantProvider>
+          <Layout>
+            <Component {...pageProps} />
+          </Layout>
+        </AiAssistantProvider>
       </CityProvider>
     </AuthProvider>
   );
 }
 
-export default MyApp; 
+export default MyApp;

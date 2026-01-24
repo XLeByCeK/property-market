@@ -1883,3 +1883,153 @@ a.menu-item:hover {
     height: 20px;
   }
 } 
+
+
+/*AI------------------------------*/
+
+.ai-assistant-button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  margin-right: 8px;
+  border-radius: 8px; /* мягкий AI-оттенок */
+  color: #4f46e5;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  border: none;
+  background:none;
+}
+
+.ai-assistant-button:hover {
+  background: rgba(99, 102, 241, 0.2);
+}
+
+.ai-icon {
+  width: 18px;
+  height: 18px;
+}
+
+.ai-text {
+  font-size: 14px;
+}
+
+/*widget AI--------*/
+
+.ai-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+  z-index: 999;
+}
+
+.ai-widget {
+  position: fixed;
+  top: 0;
+  right: -420px;
+  width: 400px;
+  height: 100vh;
+  background: #fff;
+  z-index: 1000;
+  box-shadow: -4px 0 20px rgba(0,0,0,0.15);
+  display: flex;
+  flex-direction: column;
+  transition: right 0.3s ease;
+}
+
+.ai-widget.open {
+  right: 0;
+}
+
+.ai-header {
+  padding: 16px;
+  border-bottom: 1px solid #eee;
+  display: flex;
+  justify-content: space-between;
+  font-weight: 600;
+}
+
+.ai-content {
+  flex: 1;
+  padding: 16px;
+  overflow-y: auto;
+}
+
+.ai-message {
+  background: #f3f4f6;
+  padding: 10px 12px;
+  border-radius: 10px;
+  margin-bottom: 8px;
+  max-width: 90%;
+}
+
+.ai-bot {
+  background: #eef2ff;
+}
+
+.ai-input {
+  display: flex;
+  padding: 12px;
+  border-top: 1px solid #eee;
+}
+
+.ai-input input {
+  flex: 1;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+  font-size: 14px;
+}
+
+.ai-input input:focus {
+  outline: none;
+  border-color: #6366f1;
+}
+
+
+.ai-close {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  color: #6b7280; /* gray-500 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.ai-close:hover {
+  background: #f3f4f6;
+  color: #111827;
+}
+
+.ai-send {
+  margin-left: 8px;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  border: none;
+  background: #4f46e5; /* indigo-600 */
+  color: #fff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s ease, transform 0.05s ease;
+}
+
+.ai-send:hover {
+  background: #4338ca;
+}
+
+.ai-send:active {
+  transform: scale(0.96);
+}
+
+
+

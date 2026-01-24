@@ -1,5 +1,9 @@
+'use client';
+
 import React from 'react';
 import { Header } from './Header/Header';
+import { AiAssistantWidget } from '../AiAssistant/AiAssistantWidget';
+import { AiAssistantProvider } from '../../context/AiAssistantContext';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -7,9 +11,12 @@ interface LayoutProps {
 
 export const Layout: React.FC<LayoutProps> = ({ children }) => {
   return (
-    <div className="min-h-screen">
-      <Header />
-      {children}
-    </div>
+    <AiAssistantProvider>
+      <div className="min-h-screen">
+        <Header />
+        {children}
+        <AiAssistantWidget />
+      </div>
+    </AiAssistantProvider>
   );
-}; 
+};
