@@ -7,12 +7,15 @@ type AiAssistantContextType = {
   open: () => void;
   close: () => void;
   toggle: () => void;
+  properties: any[];
+  setProperties: (p: any[]) => void;
 };
 
 const AiAssistantContext = createContext<AiAssistantContextType | null>(null);
 
 export const AiAssistantProvider = ({ children }: { children: React.ReactNode }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [properties, setProperties] = useState<any[]>([]);
 
   return (
     <AiAssistantContext.Provider
@@ -21,6 +24,8 @@ export const AiAssistantProvider = ({ children }: { children: React.ReactNode })
         open: () => setIsOpen(true),
         close: () => setIsOpen(false),
         toggle: () => setIsOpen(v => !v),
+        properties,
+        setProperties,
       }}
     >
       {children}
