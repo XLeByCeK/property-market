@@ -1,46 +1,35 @@
-import OpenAI from "openai";
+import OpenAI from 'openai';
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
 
 export async function parseUserQuery(message: string) {
-  const response = await openai.responses.create({
-    model: "gpt-4o-mini",
-    input: [
-      {
-        role: "system",
-        content: "Ты помощник по недвижимости. Отвечай ТОЛЬКО валидным JSON."
-      },
-      {
-        role: "user",
-        content: `
-Извлеки фильтры из запроса:
-"${message}"
-
-Формат:
-{
-  "city": string | null,
-  "priceMin": number | null,
-  "priceMax": number | null,
-  "rooms": number | null,
-  "hasBalcony": boolean | null,
-  "propertyType": "apartment" | "house" | null
-}
-`
-      }
-    ]
-  });
-
-  // The safe way to get the text
-  const raw = response.output_text;
-
-  if (!raw) {
-    throw new Error("Empty AI response");
-  }
-
-  // Try parsing JSON
   try {
-    return JSON.parse(raw);
-  } catch (err) {
-    throw new Error("AI response is not valid JSON: " + raw);
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        {
+          role: "system",
+          content: `
+    Ты — эксперт по недвижимости. Извлеки фильтры из запроса.
+    
+    ВАЖНО: Возвращай только JSON.
+    - city: Название города СТРОГО на английском (например, "Saint Petersburg", "Moscow").
+    - transactionType: Строго одно из: "Rent" или "Sale".
+    - propertyType: Строго одно из: "Apartment", "House", "Studio".
+    - priceMin, priceMax, rooms: Числа или null.
+  `
+        },
+        { role: "user", content: message }
+      ],
+      response_format: { type: "json_object" },
+      temperature: 0,
+    });
+
+    return JSON.parse(response.choices[0].message.content || "{}");
+  } catch (error) {
+    console.error("OpenAI Error:", error);
+    return null;
   }
 }

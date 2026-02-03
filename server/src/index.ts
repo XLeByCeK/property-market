@@ -4,6 +4,7 @@ import prisma from './prisma';
 import authRoutes from './routes/auth';
 import propertyRoutes from './routes/properties';
 import chatRoutes from './routes/chat';
+import aiRoutes from './routes/ai';
 import { Router } from 'express';
 import config from './config';
 import path from 'path';
@@ -87,6 +88,7 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
 app.use('/api/auth', authRoutes as Router);
 app.use('/api/properties', propertyRoutes as Router);
 app.use('/api/chat', chatRoutes as Router);
+app.use('/api/ai', aiRoutes as Router); 
 
 // Health check
 app.get('/health', (req, res) => {

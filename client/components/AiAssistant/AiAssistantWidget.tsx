@@ -1,5 +1,7 @@
 'use client';
 
+import Link from 'next/link';
+
 import { useState } from 'react';
 import { useAiAssistant } from '../../context/AiAssistantContext';
 import { aiSearch } from '../../services/ai.service';
@@ -9,8 +11,46 @@ type Message = {
   text: string;
 };
 
+// 👉 тип недвижимости (подстрой под свой backend при необходимости)
+type Property = {
+  id: number; // В консоли у вас число (2), а не string
+  title: string;
+  price: number;
+  city_id: number; // Соответствует вашему объекту из консоли
+  image?: string;  // Это поле мы добавили в маппинге выше
+};
+
+// 👉 карточка недвижимости
+const PropertyCard = ({ p }: { p: Property }) => (
+  <div className="ai-property-card">
+    <div className="ai-property-image-container" style={{ height: '200px', overflow: 'hidden' }}>
+      {p.image ? (
+        <img 
+          src={p.image} 
+          alt={p.title} 
+          style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+        />
+      ) : (
+        <div className="ai-no-image">Нет фото</div>
+      )}
+    </div>
+
+    <div className="ai-property-info">
+      <strong>{p.title}</strong>{/* Или p.city.name, если сделаете include city */}
+      <div>{p.price.toLocaleString()} ₽</div>
+
+      <Link href={`/property/${p.id}`} className="ai-property-link">
+        Перейти →
+      </Link>
+    </div>
+  </div>
+);
+
 export const AiAssistantWidget = () => {
-  const { isOpen, close, setProperties } = useAiAssistant();
+
+  
+  // ⬇️ ВАЖНО: теперь берём properties
+  const { isOpen, close, setProperties, properties } = useAiAssistant();
 
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState<Message[]>([
@@ -22,26 +62,29 @@ export const AiAssistantWidget = () => {
   const [loading, setLoading] = useState(false);
 
   const handleSend = async () => {
+    
     if (!input.trim() || loading) return;
 
     const userMessage = input;
     setInput('');
     setLoading(true);
 
-    // 1. Добавляем сообщение пользователя
+    
     setMessages(prev => [
       ...prev,
       { role: 'user', text: userMessage },
     ]);
 
     try {
-      // 2. Запрос к backend
       const data = await aiSearch(userMessage);
 
-      // 3. Сохраняем найденные объекты
+      console.log('Данные от AI:', data.properties);
+
+      // сохраняем объекты
       setProperties(data.properties);
 
-      // 4. Ответ ИИ
+      
+
       setMessages(prev => [
         ...prev,
         {
@@ -53,23 +96,22 @@ export const AiAssistantWidget = () => {
         },
       ]);
     } catch (e) {
-        console.error('AI SEARCH ERROR:', e);
+      console.error('AI SEARCH ERROR:', e);
 
-        setMessages(prev => [
-          ...prev,
-          {
-            role: 'bot',
-            text: 'Произошла ошибка. Попробуйте ещё раз 🙏',
-          },
-        ]);
-      } finally {
+      setMessages(prev => [
+        ...prev,
+        {
+          role: 'bot',
+          text: 'Произошла ошибка. Попробуйте ещё раз 🙏',
+        },
+      ]);
+    } finally {
       setLoading(false);
     }
   };
 
   return (
     <>
-      {/* Overlay */}
       {isOpen && <div className="ai-overlay" onClick={close} />}
 
       <aside className={`ai-widget ${isOpen ? 'open' : ''}`}>
@@ -90,6 +132,15 @@ export const AiAssistantWidget = () => {
               {m.text}
             </div>
           ))}
+
+          {/* 👉 КАРТОЧКИ НЕДВИЖИМОСТИ */}
+          {properties.length > 0 && (
+            <div className="ai-properties">
+              {properties.map(p => (
+                <PropertyCard key={p.id} p={p} />
+              ))}
+            </div>
+          )}
 
           {loading && (
             <div className="ai-message ai-bot">⏳ Думаю…</div>

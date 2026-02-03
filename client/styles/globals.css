@@ -2032,4 +2032,37 @@ a.menu-item:hover {
 }
 
 
+.ai-properties {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 12px;
+}
 
+.ai-property-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 10px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.ai-property-card img {
+  width: 100%;
+  border-radius: 8px;
+  margin-bottom: 6px;
+}
+
+.ai-property-link {
+  margin-top: 8px;
+  display: inline-block;
+  padding: 6px 10px;
+  font-size: 14px;
+  background: #111;
+  color: #fff;
+  border-radius: 6px;
+  text-decoration: none;
+}
+
+.ai-property-link:hover {
+  opacity: 0.85;
+}
