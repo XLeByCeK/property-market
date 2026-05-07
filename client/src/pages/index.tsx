@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Layout } from '../components/layout/Layout';
 import { SearchBanner } from '../components/layout/SearchBanner/SearchBanner';
-import { PropertyCategory } from '../components/category/PropertyCategory';
+import { PropertyCategory } from '../components/features/property/category/PropertyCategory';
 import { getNewBuildings, getPropertiesForSale, getPropertiesForRent, Property } from '../services/propertyService';
 import { CityProvider } from '../context/CityContext';
 

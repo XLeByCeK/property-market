@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { Layout } from '../components/layout/Layout';
-import { useAuth } from '../context/AuthContext';
+import { Layout } from '../../components/layout/Layout';
+import { useAuth } from '../../context/AuthContext';
 import { useRouter } from 'next/router';
-import { ChatComponent } from '../components/chat';
-import { AuthModal } from '../components/auth/AuthModal';
+import { ChatComponent } from '../../components/features/chat';
+import { AuthModal } from '../../components/features/auth/AuthModal';
 import Link from 'next/link';
 
 const MessagesPage = () => {

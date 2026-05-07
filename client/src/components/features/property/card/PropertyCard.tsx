@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useAuth } from '../../context/AuthContext';
-import { AuthModal } from '../auth/AuthModal';
-import { toggleFavorite, isPropertyFavorited } from '../../services/propertyService';
+import { useAuth } from '../../../../context/AuthContext';
+import { AuthModal } from '../../auth/AuthModal';
+import { toggleFavorite, isPropertyFavorited } from '../../../../services/propertyService';
 
 interface PropertyCardProps {
   id: string;

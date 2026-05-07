@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { AuthModal } from '../../auth/AuthModal';
+import { AuthModal } from '../../features/auth/AuthModal';
 import { useAuth } from '../../../context/AuthContext';
 
 export const UserMenu = () => {

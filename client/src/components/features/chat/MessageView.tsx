@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Conversation, Message, getMessages, sendMessage, markAsRead } from '../../services/chatService';
-import { useAuth } from '../../context/AuthContext';
+import { Conversation, Message, getMessages, sendMessage, markAsRead } from '../../../services/chatService';
+import { useAuth } from '../../../context/AuthContext';
 
 interface MessageViewProps {
   conversation: Conversation;

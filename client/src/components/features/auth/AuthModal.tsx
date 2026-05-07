@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useAuth, RegisterData } from '../../context/AuthContext';
+import { useAuth, RegisterData } from '../../../context/AuthContext';
 import { useRouter } from 'next/router';
 
 type AuthMode = 'login' | 'register';

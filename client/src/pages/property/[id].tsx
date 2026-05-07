@@ -2,10 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
 import { Layout } from '../../components/layout/Layout';
-import { PropertyImageCarousel } from '../../components/property/PropertyImageCarousel';
-import { PropertyInfo } from '../../components/property/PropertyInfo';
-import { PropertyContactCard } from '../../components/property/PropertyContactCard';
-import { YandexMap } from '../../components/property/YandexMap';
+import { PropertyImageCarousel } from '../../components/features/property/PropertyImageCarousel';
+import { PropertyInfo } from '../../components/features/property/PropertyInfo';
+import { PropertyContactCard } from '../../components/features/property/PropertyContactCard';
+import { YandexMap } from '../../components/features/property/YandexMap';
 import { getPropertyById, PropertyDetails, recordPropertyView } from '../../services/propertyService';
 import { useAuth } from '../../context/AuthContext';
 

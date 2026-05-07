@@ -3,7 +3,7 @@ import { useRouter } from 'next/router';
 import Link from 'next/link';
 import Head from 'next/head';
 import { Layout } from '../../components/layout/Layout';
-import { PropertyCard } from '../../components/card/PropertyCard';
+import { PropertyCard } from '../../components/features/property/card/PropertyCard';
 import { getAllProperties, getNewBuildings, getPropertiesForSale, getPropertiesForRent, Property } from '../../services/propertyService';
 
 // Define category types and their respective titles and fetch strategies

@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../../context/AuthContext';
 import { AuthModal } from '../auth/AuthModal';
-import { toggleFavorite, isPropertyFavorited } from '../../services/propertyService';
-import { sendMessage } from '../../services/chatService';
+import { toggleFavorite, isPropertyFavorited } from '../../../services/propertyService';
+import { sendMessage } from '../../../services/chatService';
 
 interface PropertyContactCardProps {
   property: any; // Using any type to avoid issues with favorites field which is not in the PropertyDetails interface

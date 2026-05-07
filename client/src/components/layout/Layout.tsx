@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Header } from './Header/Header';
-import { AiAssistantWidget } from '../AiAssistant/AiAssistantWidget';
+import { AiAssistantWidget } from '../../components/features/AiAssistant/AiAssistantWidget';
 import { AiAssistantProvider } from '../../context/AiAssistantContext';
 
 interface LayoutProps {

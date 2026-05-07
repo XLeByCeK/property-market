@@ -3,7 +3,7 @@ import { NextPage } from 'next';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
 import { Layout } from '../../components/layout/Layout';
-import PropertyForm from '../../components/property/PropertyForm';
+import PropertyForm from '../../components/features/property/PropertyForm';
 import { useAuth } from '../../context/AuthContext';
 
 const CreatePropertyPage: NextPage = () => {

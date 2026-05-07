@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
 import { Layout } from '../components/layout/Layout';
-import { PropertyCardAdapter } from '../components/card/PropertyCardAdapter';
+import { PropertyCardAdapter } from '../components/features/property/card/PropertyCardAdapter';
 import { Property, searchProperties } from '../services/propertyService';
 
 const SearchPage: React.FC = () => {

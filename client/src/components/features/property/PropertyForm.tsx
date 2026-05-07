@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
-import * as propertyService from '../../services/propertyService';
-import { PropertyFormData } from '../../services/propertyService';
+import * as propertyService from '../../../services/propertyService';
+import { PropertyFormData } from '../../../services/propertyService';
 
 // Define interfaces for select options
 interface SelectOption {

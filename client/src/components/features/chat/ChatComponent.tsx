@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
-import { Conversation, getConversations, Message, sendMessage, getMessages } from '../../services/chatService';
+import { Conversation, getConversations, Message, sendMessage, getMessages } from '../../../services/chatService';
 import { ConversationsList } from './';
 import { MessageView } from './';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../../context/AuthContext';
 
 interface UserForConversation {
   id: number;

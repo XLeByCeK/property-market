@@ -8,7 +8,7 @@ import { Footer } from '../../components/layout/Footer/Footer';
 import { useAuth } from '../../context/AuthContext';
 import { getViewHistory } from '../../services/propertyService';
 import { Property } from '../../services/propertyService';
-import { PropertyCard } from '../../components/card/PropertyCard';
+import { PropertyCard } from '../../components/features/property/card/PropertyCard';
 
 const ProfileHistoryPage: NextPage = () => {
   const { user, isAuthenticated, isLoading } = useAuth();

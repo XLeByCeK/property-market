@@ -1,5 +1,5 @@
 import React from 'react';
-import { Property } from '../../services/propertyService';
+import { Property } from '../../../../services/propertyService';
 import { PropertyCard } from './PropertyCard';
 
 interface PropertyCardAdapterProps {

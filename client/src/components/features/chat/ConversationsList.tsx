@@ -1,5 +1,5 @@
 import React from 'react';
-import { Conversation } from '../../services/chatService';
+import { Conversation } from '../../../services/chatService';
 import Image from 'next/image';
 
 interface ConversationsListProps {

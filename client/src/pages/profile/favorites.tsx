@@ -7,7 +7,7 @@ import { Header } from '../../components/layout/Header/Header';
 import { Footer } from '../../components/layout/Footer/Footer';
 import { useAuth } from '../../context/AuthContext';
 import { Property, getFavoriteProperties } from '../../services/propertyService';
-import { PropertyCard } from '../../components/card/PropertyCard';
+import { PropertyCard } from '../../components/features/property/card/PropertyCard';
 
 const ProfileFavoritesPage: NextPage = () => {
   const { user, isAuthenticated, isLoading } = useAuth();

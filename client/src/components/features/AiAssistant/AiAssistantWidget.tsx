@@ -3,8 +3,8 @@
 import Link from 'next/link';
 
 import { useState } from 'react';
-import { useAiAssistant } from '../../context/AiAssistantContext';
-import { aiSearch } from '../../services/ai.service';
+import { useAiAssistant } from '../../../context/AiAssistantContext';
+import { aiSearch } from '../../../services/ai.service';
 
 type Message = {
   role: 'user' | 'bot';

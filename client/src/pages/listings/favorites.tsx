@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { NextPage } from 'next';
 import { useRouter } from 'next/router';
-import { Layout } from '../components/layout/Layout';
-import { PropertyCard } from '../components/card/PropertyCard';
-import { Property, getFavoriteProperties } from '../services/propertyService';
-import { useAuth } from '../context/AuthContext';
+import { Layout } from '../../components/layout/Layout';
+import { PropertyCard } from '../../components/features/property/card/PropertyCard';
+import { Property, getFavoriteProperties } from '../../services/propertyService';
+import { useAuth } from '../../context/AuthContext';
 import Link from 'next/link';
 
 const FavoritesPage: NextPage = () => {

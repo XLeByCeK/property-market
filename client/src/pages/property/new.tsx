@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { NextPage } from 'next';
 import { Layout } from '../../components/layout/Layout';
-import PropertyForm from '../../components/property/PropertyForm';
+import PropertyForm from '../../components/features/property/PropertyForm';
 import { useAuth } from '../../context/AuthContext';
 
 const NewPropertyPage: NextPage = () => {
