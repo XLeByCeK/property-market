@@ -1,16 +1,14 @@
 import jwt from 'jsonwebtoken';
-
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
-const JWT_EXPIRES_IN = '7d';
+import config from '../config/index'; // Импортируем из конфига
 
 export function generateJWT(userId: number): string {
-  return jwt.sign({ id: userId }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+  return jwt.sign({ id: userId }, config.jwtSecret, { expiresIn: config.jwtExpiresIn as any});
 }
 
 export function verifyJWT(token: string): { id: number } | null {
   try {
-    return jwt.verify(token, JWT_SECRET) as { id: number };
+    return jwt.verify(token, config.jwtSecret) as { id: number };
   } catch (error) {
     return null;
   }
-} 
+}

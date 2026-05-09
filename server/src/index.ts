@@ -1,6 +1,6 @@
 import express from 'express';
 import cors from 'cors';
-import prisma from './prisma';
+import prisma from './config/prisma';
 import authRoutes from './routes/auth';
 import propertyRoutes from './routes/properties';
 import chatRoutes from './routes/chat';

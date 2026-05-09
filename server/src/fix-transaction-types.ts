@@ -1,4 +1,4 @@
-import prisma from './prisma';
+import prisma from './config/prisma';
 
 async function fixTransactionTypes() {
   console.log('Starting transaction type fix script...');
