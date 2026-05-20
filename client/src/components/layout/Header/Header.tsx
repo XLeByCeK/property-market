@@ -9,6 +9,7 @@ import { CitySelector } from './CitySelector';
 import { UserMenu } from './UserMenu';
 import { useAuth } from '../../../context/AuthContext';
 import { useAiAssistant } from '../../../context/AiAssistantContext';
+import { PLACEHOLDER_LOGO } from '../../../utils/imageUrl';
 
 
 export const Header = () => {
@@ -64,7 +65,7 @@ export const Header = () => {
             <Link href="/" className="logo-container">
               <div className="logo">
                 <Image
-                  src="/placeholder-logo.png"
+                  src={PLACEHOLDER_LOGO}
                   alt="Company Logo"
                   width={32}
                   height={32}

@@ -222,12 +222,12 @@ async function main() {
           images: {
             create: [
               {
-                image_url: '/14986.f1fc85aa.jpg',
+                image_url: '/property_images/seed/14986.f1fc85aa.jpg',
                 is_main: true,
                 order: 0
               },
               {
-                image_url: '/fill_570_310_006.jpg',
+                image_url: '/property_images/seed/fill_570_310_006.jpg',
                 is_main: false,
                 order: 1
               }
@@ -274,12 +274,12 @@ async function main() {
           images: {
             create: [
               {
-                image_url: '/minimalizm_5814_oleynik.jpg',
+                image_url: '/property_images/seed/minimalizm_5814_oleynik.jpg',
                 is_main: true,
                 order: 0
               },
               {
-                image_url: '/NKF-1-result.jpg',
+                image_url: '/property_images/seed/NKF-1-result.jpg',
                 is_main: false,
                 order: 1
               }
@@ -328,12 +328,12 @@ async function main() {
           images: {
             create: [
               {
-                image_url: '/1.jpg',
+                image_url: '/property_images/seed/1.jpg',
                 is_main: true,
                 order: 0
               },
               {
-                image_url: '/kk03.jpg',
+                image_url: '/property_images/seed/kk03.jpg',
                 is_main: false,
                 order: 1
               }
@@ -381,12 +381,12 @@ async function main() {
           images: {
             create: [
               {
-                image_url: '/a52ab9eb469ea9d8ddc709b640104fa2.jpg',
+                image_url: '/property_images/seed/a52ab9eb469ea9d8ddc709b640104fa2.jpg',
                 is_main: true,
                 order: 0
               },
               {
-                image_url: '/dizayn-interyera-kvartiry-101-kv-m-foto-1-4356.jpg',
+                image_url: '/property_images/seed/dizayn-interyera-kvartiry-101-kv-m-foto-1-4356.jpg',
                 is_main: false,
                 order: 1
               }
@@ -431,7 +431,7 @@ async function main() {
           images: {
             create: [
               {
-                image_url: '/images.jpg',
+                image_url: '/property_images/seed/images.jpg',
                 is_main: true,
                 order: 0
               }

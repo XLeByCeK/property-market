@@ -3,6 +3,7 @@ import { useRouter } from 'next/router';
 import Image from 'next/image';
 import { Layout } from '../components/layout/Layout';
 import { getPropertyById, getPropertiesForSale, PropertyFromAPI, mapPropertyFromAPI, Property } from '../services/propertyService';
+import { BANNER_BG_IMAGE } from '../utils/imageUrl';
 
 interface EvaluationResults {
   status: 'loading' | 'success' | 'error';
@@ -392,7 +393,7 @@ const PropertyEvaluationPage: React.FC = () => {
             <div className="evaluation-banner-content">
               <div className="image-container">
                 <Image
-                  src="/images/banner-bg.jpg"
+                  src={BANNER_BG_IMAGE}
                   alt="Property evaluation"
                   width={700}
                   height={600}

@@ -7,6 +7,7 @@ import { Header } from '../../components/layout/Header/Header';
 import { Footer } from '../../components/layout/Footer/Footer';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../services/api';
+import { getMainImageUrl } from '../../utils/imageUrl';
 
 interface Property {
   id: number;
@@ -66,10 +67,7 @@ const ProfilePropertiesPage: NextPage = () => {
   }, [user]);
 
   // Get main image URL or placeholder
-  const getMainImage = (property: Property) => {
-    const mainImage = property.images.find(img => img.is_main);
-    return mainImage ? mainImage.image_url : '/images/null-image.jpg';
-  };
+  const getMainImage = (property: Property) => getMainImageUrl(property.images);
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);

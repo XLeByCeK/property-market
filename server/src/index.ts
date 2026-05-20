@@ -7,7 +7,6 @@ import chatRoutes from './routes/chat';
 import aiRoutes from './routes/ai';
 import { Router } from 'express';
 import config from './config';
-import path from 'path';
 
 const app = express();
 const port = config.port;
@@ -25,47 +24,8 @@ app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Serve static files from the public directory
-console.log('Setting up static file serving from:', path.join(__dirname, '../public'));
-app.use(express.static(path.join(__dirname, '../public'), {
-  maxAge: '1d', // Кеширование на 1 день
-  index: false, // Отключаем автоматическую подачу index.html
-  setHeaders: (res, filePath) => {
-    // Устанавливаем правильные заголовки для изображений
-    if (filePath.endsWith('.jpg') || filePath.endsWith('.jpeg') || filePath.endsWith('.png')) {
-      res.setHeader('Cache-Control', 'public, max-age=86400');
-      res.setHeader('Content-Type', filePath.endsWith('.png') ? 'image/png' : 'image/jpeg');
-    }
-  }
-}));
-
-// Дополнительный путь для проверки загрузки изображений
-app.get('/test-image', (req, res) => {
-  const imagePath = req.query.path;
-  if (!imagePath || typeof imagePath !== 'string') {
-    return res.send(`
-      <html>
-        <head><title>Test Image Loading</title></head>
-        <body>
-          <h1>Image Test Page</h1>
-          <p>Please provide an image path as a query parameter, e.g. /test-image?path=/uploads/properties/image.jpg</p>
-        </body>
-      </html>
-    `);
-  }
-  
-  res.send(`
-    <html>
-      <head><title>Test Image: ${imagePath}</title></head>
-      <body>
-        <h1>Testing image: ${imagePath}</h1>
-        <img src="${imagePath}" style="max-width: 100%" onerror="document.getElementById('error').textContent = 'Error loading image'">
-        <div id="error" style="color: red"></div>
-        <p>Image URL: ${imagePath}</p>
-      </body>
-    </html>
-  `);
-});
+// Изображения объектов недвижимости хранятся в Yandex Object Storage,
+// статика клиента раздаётся Next.js — серверу express.static больше не нужен.
 
 // Log requests in development
 if (config.environment === 'development') {

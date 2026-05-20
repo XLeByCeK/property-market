@@ -3,84 +3,66 @@ import prisma from '../config/prisma';
 import { authenticateToken } from '../middleware/auth';
 import { Prisma } from '@prisma/client';
 import multer from 'multer';
-import path from 'path';
-import fs from 'fs';
+import { uploadBuffer } from '../services/storage.service';
 
 const router = express.Router();
 
-// Configure multer storage
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    const uploadDir = path.join(__dirname, '../../public/uploads/properties');
-    
-    // Create directory if it doesn't exist
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
+// Файлы держим в памяти, чтобы сразу пушить их в Yandex Object Storage без локального диска.
+const upload = multer({
+  storage: multer.memoryStorage(),
+  fileFilter: (_req, file, cb) => {
+    if (file.mimetype.startsWith('image/')) {
+      cb(null, true);
+    } else {
+      cb(null, false);
     }
-    
-    cb(null, uploadDir);
   },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    const ext = path.extname(file.originalname);
-    cb(null, `property-${uniqueSuffix}${ext}`);
-  }
-});
-
-// File filter for images
-const fileFilter = (req: express.Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
-  if (file.mimetype.startsWith('image/')) {
-    cb(null, true);
-  } else {
-    cb(null, false);
-  }
-};
-
-const upload = multer({ 
-  storage,
-  fileFilter,
   limits: {
     fileSize: 5 * 1024 * 1024, // 5MB limit
-  }
+  },
 });
 
-// Upload property images
+// Upload property images в Yandex Object Storage
 router.post('/upload-images', authenticateToken, upload.array('images', 10), async (req, res) => {
   try {
     console.log('Received image upload request');
-    
+
     if (!req.user) {
       console.log('Upload error: User not authenticated');
       return res.status(401).json({ error: 'Unauthorized' });
     }
-    
+
     if (!req.files || (Array.isArray(req.files) && req.files.length === 0)) {
       console.log('Upload error: No files were uploaded');
       return res.status(400).json({ error: 'No files uploaded' });
     }
-    
-    console.log(`Processing ${Array.isArray(req.files) ? req.files.length : 0} uploaded files`);
-    
+
     const files = req.files as Express.Multer.File[];
-    const basePath = path.join(__dirname, '../../public');
-    
-    console.log('Base path for images:', basePath);
-    
-    const imageUrls = files.map(file => {
-      console.log('Original file path:', file.path);
-      // Convert Windows path separators to URL format
-      const relativePath = path.relative(basePath, file.path).replace(/\\/g, '/');
-      const finalUrl = `/${relativePath}`;
-      console.log('Converted image URL:', finalUrl);
-      return finalUrl;
-    });
-    
-    console.log('Final image URLs to be returned:', imageUrls);
-    
+    console.log(`Uploading ${files.length} file(s) to Yandex Object Storage`);
+
+    const uploaded = await Promise.all(
+      files.map((file) =>
+        uploadBuffer({
+          buffer: file.buffer,
+          contentType: file.mimetype,
+          originalName: file.originalname,
+        })
+      )
+    );
+
+    // В БД сохраняются относительные пути вида `/property_images/uploads/<uuid>.jpg`.
+    // Клиент собирает абсолютный URL через NEXT_PUBLIC_YANDEX_STORAGE_URL.
+    const imageUrls = uploaded.map((obj) => obj.relativeUrl);
+
+    console.log('Uploaded image URLs:', imageUrls);
+
     res.status(200).json({ imageUrls });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error uploading images:', error);
-    res.status(500).json({ error: 'Failed to upload images' });
+    res.status(500).json({
+      error: 'Failed to upload images',
+      details: error?.message,
+    });
   }
 });
 

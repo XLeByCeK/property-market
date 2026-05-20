@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { useAiAssistant } from '../../../context/AiAssistantContext';
 import { aiSearch } from '../../../services/ai.service';
+import { getImageUrl } from '../../../utils/imageUrl';
 
 type Message = {
   role: 'user' | 'bot';
@@ -25,10 +26,10 @@ const PropertyCard = ({ p }: { p: Property }) => (
   <div className="ai-property-card">
     <div className="ai-property-image-container" style={{ height: '200px', overflow: 'hidden' }}>
       {p.image ? (
-        <img 
-          src={p.image} 
-          alt={p.title} 
-          style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+        <img
+          src={getImageUrl(p.image)}
+          alt={p.title}
+          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
         />
       ) : (
         <div className="ai-no-image">Нет фото</div>

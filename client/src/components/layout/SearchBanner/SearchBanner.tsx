@@ -3,6 +3,7 @@ import Image from 'next/image';
 import { useRouter } from 'next/router';
 import { useCity } from '../../../context/CityContext';
 import { getPropertyTypes, getTransactionTypes, getCities, getDistrictsByCityId, getMetroStationsByCityId } from '../../../services/propertyService';
+import { BANNER_BG_IMAGE } from '../../../utils/imageUrl';
 
 interface SearchBannerProps {
   backgroundImage?: string;
@@ -32,7 +33,7 @@ interface MetroStation {
 }
 
 export const SearchBanner: React.FC<SearchBannerProps> = ({ 
-  backgroundImage = '/images/banner-bg.jpg'
+  backgroundImage = BANNER_BG_IMAGE
 }) => {
   const router = useRouter();
   const { selectedCity } = useCity();

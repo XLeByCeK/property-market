@@ -42,7 +42,7 @@ export default function Home() {
   return (
     <CityProvider>
       <Layout>
-        <SearchBanner backgroundImage="/images/banner-bg.jpg" />
+        <SearchBanner />
         
         <main className="container">
           {error && (

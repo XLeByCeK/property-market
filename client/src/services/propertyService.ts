@@ -1,5 +1,6 @@
 import axios from 'axios';
 import api from './api';
+import { getImageUrl, getMainImageUrl, PLACEHOLDER_NULL_IMAGE } from '../utils/imageUrl';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
 
@@ -275,11 +276,10 @@ export const isPropertyFavorited = async (propertyId: string | number): Promise<
  * Преобразует данные с API в формат для отображения в UI
  */
 export const mapPropertyFromAPI = (property: PropertyFromAPI): Property => {
-  // Основное изображение или заглушка, если нет изображений
-  const mainImage = property.images.find(img => img.is_main)?.image_url || 
-                    property.images[0]?.image_url || 
-                    '/images/null-image.jpg';
-  
+  // Основное изображение или заглушка, если нет изображений.
+  // Все image_url из БД могут быть относительными (/property_images/...) — getMainImageUrl сам подставит базовый URL Yandex Object Storage.
+  const mainImage = getMainImageUrl(property.images, PLACEHOLDER_NULL_IMAGE);
+
   // Определение типа комнат
   let roomsText = '';
   if (property.rooms === 0) {
@@ -485,44 +485,12 @@ interface UploadImagesResponse {
 export const uploadPropertyImages = async (formData: FormData): Promise<UploadImagesResponse> => {
   try {
     console.log('Uploading property images...');
-    const response = await api.properties.uploadImages(formData) as UploadImagesResponse;
+    const response = (await api.properties.uploadImages(formData)) as UploadImagesResponse;
     console.log('Upload response:', response);
-    
-    // Проверка и исправление URL-адресов изображений
-    if (response && response.imageUrls && Array.isArray(response.imageUrls)) {
-      // Получаем API URL из окружения или используем localhost
-      const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-      
-      // Преобразуем URL-адреса, если нужно
-      const processedUrls = response.imageUrls.map((url: string) => {
-        console.log('Processing image URL:', url);
-        
-        // Если URL начинается с http, то оставляем как есть
-        if (url.startsWith('http')) {
-          return url;
-        }
-        
-        // Если URL начинается с /, а API URL не заканчивается на /,
-        // то соединяем их
-        if (url.startsWith('/')) {
-          // Убедимся, что мы не добавляем /api дважды
-          if (url.startsWith('/api/')) {
-            return `${apiBaseUrl}${url}`;
-          } else if (url.startsWith('/uploads/')) {
-            return `${apiBaseUrl}${url}`;
-          } else {
-            return url;
-          }
-        }
-        
-        // В противном случае добавляем слеш
-        return `/${url}`;
-      });
-      
-      console.log('Processed image URLs:', processedUrls);
-      return { ...response, imageUrls: processedUrls };
-    }
-    
+
+    // Сервер возвращает относительные пути вида `/property_images/uploads/<uuid>.jpg`.
+    // Сохраняем их в исходном виде — в БД попадает именно относительный путь,
+    // а абсолютный URL для рендера соберёт getImageUrl на клиенте.
     return response;
   } catch (error) {
     console.error('Error uploading images:', error);

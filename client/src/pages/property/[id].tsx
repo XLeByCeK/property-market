@@ -8,6 +8,7 @@ import { PropertyContactCard } from '../../components/features/property/Property
 import { YandexMap } from '../../components/features/property/YandexMap';
 import { getPropertyById, PropertyDetails, recordPropertyView } from '../../services/propertyService';
 import { useAuth } from '../../context/AuthContext';
+import { PLACEHOLDER_NULL_IMAGE } from '../../utils/imageUrl';
 
 const PropertyPage = () => {
   const router = useRouter();
@@ -113,19 +114,19 @@ const PropertyPage = () => {
       images: [
         {
           id: 1,
-          image_url: '/images/null-image.jpg',
+          image_url: PLACEHOLDER_NULL_IMAGE,
           is_main: true,
           order: 0
         },
         {
           id: 2,
-          image_url: '/images/null-image.jpg',
+          image_url: PLACEHOLDER_NULL_IMAGE,
           is_main: false,
           order: 1
         },
         {
           id: 3,
-          image_url: '/images/null-image.jpg',
+          image_url: PLACEHOLDER_NULL_IMAGE,
           is_main: false,
           order: 2
         }

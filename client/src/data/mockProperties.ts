@@ -13,7 +13,7 @@ export interface Property {
 export const newBuildings: Property[] = [
   {
     id: 'nb1',
-    image: '/images/null-image.jpg',
+    image: '/images/placeholders/null-image.jpg',
     price: 8500000,
     propertyType: 'Квартира',
     rooms: '2 комн.',
@@ -23,7 +23,7 @@ export const newBuildings: Property[] = [
   },
   {
     id: 'nb2',
-    image: '/images/null-image.jpg',
+    image: '/images/placeholders/null-image.jpg',
     price: 6200000,
     propertyType: 'Квартира',
     rooms: '1 комн.',
@@ -33,7 +33,7 @@ export const newBuildings: Property[] = [
   },
   {
     id: 'nb3',
-    image: '/images/null-image.jpg',
+    image: '/images/placeholders/null-image.jpg',
     price: 12500000,
     propertyType: 'Квартира',
     rooms: '3 комн.',
@@ -43,7 +43,7 @@ export const newBuildings: Property[] = [
   },
   {
     id: 'nb4',
-    image: '/images/null-image.jpg',
+    image: '/images/placeholders/null-image.jpg',
     price: 9800000,
     propertyType: 'Квартира',
     rooms: '2 комн.',
@@ -53,7 +53,7 @@ export const newBuildings: Property[] = [
   },
   {
     id: 'nb5',
-    image: '/images/null-image.jpg',
+    image: '/images/placeholders/null-image.jpg',
     price: 14200000,
     propertyType: 'Квартира',
     rooms: '3 комн.',
@@ -63,7 +63,7 @@ export const newBuildings: Property[] = [
   },
   {
     id: 'nb6',
-    image: '/images/null-image.jpg',
+    image: '/images/placeholders/null-image.jpg',
     price: 7500000,
     propertyType: 'Квартира',
     rooms: '1 комн.',
@@ -73,7 +73,7 @@ export const newBuildings: Property[] = [
   },
   {
     id: 'nb7',
-    image: '/images/null-image.jpg',
+    image: '/images/placeholders/null-image.jpg',
     price: 11000000,
     propertyType: 'Квартира',
     rooms: '2 комн.',
@@ -83,7 +83,7 @@ export const newBuildings: Property[] = [
   },
   {
     id: 'nb8',
-    image: '/images/null-image.jpg',
+    image: '/images/placeholders/null-image.jpg',
     price: 18500000,
     propertyType: 'Квартира',
     rooms: '4 комн.',
@@ -97,7 +97,7 @@ export const newBuildings: Property[] = [
 export const forSale: Property[] = [
   {
     id: 'fs1',
-    image: '/images/null-image.jpg',
+    image: '/images/placeholders/null-image.jpg',
     price: 15500000,
     propertyType: 'Дом',
     rooms: '5 комн.',
@@ -107,7 +107,7 @@ export const forSale: Property[] = [
   },
   {
     id: 'fs2',
-    image: '/images/null-image.jpg',
+    image: '/images/placeholders/null-image.jpg',
     price: 9900000,
     propertyType: 'Квартира',
     rooms: '3 комн.',
@@ -117,7 +117,7 @@ export const forSale: Property[] = [
   },
   {
     id: 'fs3',
-    image: '/images/null-image.jpg',
+    image: '/images/placeholders/null-image.jpg',
     price: 5700000,
     propertyType: 'Квартира',
     rooms: '1 комн.',
@@ -127,7 +127,7 @@ export const forSale: Property[] = [
   },
   {
     id: 'fs4',
-    image: '/images/null-image.jpg',
+    image: '/images/placeholders/null-image.jpg',
     price: 22000000,
     propertyType: 'Коммерческая',
     rooms: '5 комн.',
@@ -137,7 +137,7 @@ export const forSale: Property[] = [
   },
   {
     id: 'fs5',
-    image: '/images/null-image.jpg',
+    image: '/images/placeholders/null-image.jpg',
     price: 7800000,
     propertyType: 'Квартира',
     rooms: '2 комн.',
@@ -147,7 +147,7 @@ export const forSale: Property[] = [
   },
   {
     id: 'fs6',
-    image: '/images/null-image.jpg',
+    image: '/images/placeholders/null-image.jpg',
     price: 45000000,
     propertyType: 'Дом',
     rooms: '7 комн.',
@@ -157,7 +157,7 @@ export const forSale: Property[] = [
   },
   {
     id: 'fs7',
-    image: '/images/null-image.jpg',
+    image: '/images/placeholders/null-image.jpg',
     price: 6300000,
     propertyType: 'Квартира',
     rooms: '1 комн.',
@@ -167,7 +167,7 @@ export const forSale: Property[] = [
   },
   {
     id: 'fs8',
-    image: '/images/null-image.jpg',
+    image: '/images/placeholders/null-image.jpg',
     price: 12700000,
     propertyType: 'Участок с домом',
     rooms: '4 комн.',
@@ -181,7 +181,7 @@ export const forSale: Property[] = [
 export const forRent: Property[] = [
   {
     id: 'fr1',
-    image: '/images/null-image.jpg',
+    image: '/images/placeholders/null-image.jpg',
     price: 35000,
     propertyType: 'Квартира',
     rooms: '1 комн.',
@@ -191,7 +191,7 @@ export const forRent: Property[] = [
   },
   {
     id: 'fr2',
-    image: '/images/null-image.jpg',
+    image: '/images/placeholders/null-image.jpg',
     price: 45000,
     propertyType: 'Квартира',
     rooms: '2 комн.',
@@ -201,7 +201,7 @@ export const forRent: Property[] = [
   },
   {
     id: 'fr3',
-    image: '/images/null-image.jpg',
+    image: '/images/placeholders/null-image.jpg',
     price: 30000,
     propertyType: 'Квартира',
     rooms: 'Студия',
@@ -211,7 +211,7 @@ export const forRent: Property[] = [
   },
   {
     id: 'fr4',
-    image: '/images/null-image.jpg',
+    image: '/images/placeholders/null-image.jpg',
     price: 80000,
     propertyType: 'Офис',
     rooms: '3 комн.',
@@ -221,7 +221,7 @@ export const forRent: Property[] = [
   },
   {
     id: 'fr5',
-    image: '/images/null-image.jpg',
+    image: '/images/placeholders/null-image.jpg',
     price: 120000,
     propertyType: 'Дом',
     rooms: '4 комн.',
@@ -231,7 +231,7 @@ export const forRent: Property[] = [
   },
   {
     id: 'fr6',
-    image: '/images/null-image.jpg',
+    image: '/images/placeholders/null-image.jpg',
     price: 40000,
     propertyType: 'Квартира',
     rooms: '2 комн.',
@@ -241,7 +241,7 @@ export const forRent: Property[] = [
   },
   {
     id: 'fr7',
-    image: '/images/null-image.jpg',
+    image: '/images/placeholders/null-image.jpg',
     price: 55000,
     propertyType: 'Квартира',
     rooms: '3 комн.',
@@ -251,7 +251,7 @@ export const forRent: Property[] = [
   },
   {
     id: 'fr8',
-    image: '/images/null-image.jpg',
+    image: '/images/placeholders/null-image.jpg',
     price: 150000,
     propertyType: 'Торговое помещение',
     rooms: '2 комн.',

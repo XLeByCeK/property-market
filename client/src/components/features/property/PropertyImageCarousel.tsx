@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import Image from 'next/image';
+import { getImageUrl, PLACEHOLDER_NULL_IMAGE } from '../../../utils/imageUrl';
 
 interface PropertyImageCarouselProps {
   images: Array<{
@@ -20,7 +21,7 @@ export const PropertyImageCarousel: React.FC<PropertyImageCarouselProps> = ({ im
   if (sortedImages.length === 0) {
     sortedImages.push({
       id: 0,
-      image_url: '/images/null-image.jpg',
+      image_url: PLACEHOLDER_NULL_IMAGE,
       is_main: true,
       order: 0
     });
@@ -48,7 +49,7 @@ export const PropertyImageCarousel: React.FC<PropertyImageCarouselProps> = ({ im
         </button>
         <div className="carousel-image-container">
           <Image
-            src={sortedImages[activeIndex].image_url}
+            src={getImageUrl(sortedImages[activeIndex].image_url)}
             alt="Property image"
             fill
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
@@ -72,7 +73,7 @@ export const PropertyImageCarousel: React.FC<PropertyImageCarouselProps> = ({ im
               onClick={() => goToSlide(index)}
             >
               <Image
-                src={image.image_url}
+                src={getImageUrl(image.image_url)}
                 alt={`Property image thumbnail ${index + 1}`}
                 width={100}
                 height={60}

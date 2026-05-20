@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import * as propertyService from '../../../services/propertyService';
 import { PropertyFormData } from '../../../services/propertyService';
+import { getImageUrl, PLACEHOLDER_NULL_IMAGE } from '../../../utils/imageUrl';
 
 // Define interfaces for select options
 interface SelectOption {
@@ -154,23 +155,14 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ propertyId, initialData }) 
     
     try {
       const response = await propertyService.uploadPropertyImages(formDataForImage);
-      const newImageUrls = (response as any).imageUrls;
-      
+      const newImageUrls = (response as any).imageUrls as string[];
+
       console.log('Uploaded image URLs:', newImageUrls);
-      
-      // Fix URLs if needed (make sure they start with http or / for proper loading)
-      const processedUrls = newImageUrls.map((url: string) => {
-        // If URL doesn't start with http or /, add the API base URL
-        if (!url.startsWith('http') && !url.startsWith('/')) {
-          return `/${url}`;
-        }
-        return url;
-      });
-      
-      console.log('Processed image URLs:', processedUrls);
-      
-      setUploadedImageUrls([...uploadedImageUrls, ...processedUrls]);
-      setFormData({ ...formData, images: [...formData.images, ...processedUrls] });
+
+      // В БД и стейте храним относительные пути из YC (`/property_images/uploads/<uuid>.jpg`),
+      // в превью getImageUrl собирает абсолютный URL Yandex Object Storage.
+      setUploadedImageUrls([...uploadedImageUrls, ...newImageUrls]);
+      setFormData({ ...formData, images: [...formData.images, ...newImageUrls] });
     } catch (error) {
       console.error('Error uploading images:', error);
       alert('Failed to upload images. Please try again.');
@@ -585,12 +577,8 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ propertyId, initialData }) 
           {uploadedImageUrls.length > 0 && (
             <div className="image-preview-grid">
               {uploadedImageUrls.map((url, index) => {
-                // Log each URL for debugging
-                console.log(`Preview image ${index + 1}:`, url);
-                
-                // Make sure URL is properly formatted
-                const imageUrl = url.startsWith('http') || url.startsWith('/') ? url : `/${url}`;
-                
+                const imageUrl = getImageUrl(url);
+
                 return (
                   <div key={index} className="image-preview-item">
                     <img
@@ -599,7 +587,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ propertyId, initialData }) 
                       className="preview-image"
                       onError={(e) => {
                         console.error(`Error loading image ${index + 1}:`, imageUrl);
-                        (e.target as HTMLImageElement).src = '/images/null-image.jpg'; // Fallback image
+                        (e.target as HTMLImageElement).src = PLACEHOLDER_NULL_IMAGE;
                       }}
                     />
                     <button

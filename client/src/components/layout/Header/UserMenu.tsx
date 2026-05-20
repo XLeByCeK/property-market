@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { AuthModal } from '../../features/auth/AuthModal';
 import { useAuth } from '../../../context/AuthContext';
+import { PLACEHOLDER_AVATAR } from '../../../utils/imageUrl';
 
 export const UserMenu = () => {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
@@ -63,7 +64,7 @@ export const UserMenu = () => {
         {/* Desktop version */}
         <button className="user-avatar d-none d-lg-block">
           <Image
-            src={isAuthenticated ? "/avatar.png" : "/placeholder-avatar.png"}
+            src={PLACEHOLDER_AVATAR}
             alt="User Avatar"
             width={32}
             height={32}
@@ -87,7 +88,7 @@ export const UserMenu = () => {
         {/* Mobile version */}
         <button className="user-avatar d-lg-none" onClick={handleUserMenuClick}>
           <Image
-            src={isAuthenticated ? "/avatar.png" : "/placeholder-avatar.png"}
+            src={PLACEHOLDER_AVATAR}
             alt="User Avatar"
             width={32}
             height={32}
@@ -99,7 +100,7 @@ export const UserMenu = () => {
             <div className="d-flex align-items-center">
               <div className="me-3">
                 <Image
-                  src={isAuthenticated ? "/placeholder-avatar.png" : "/placeholder-avatar.png"}
+                  src={PLACEHOLDER_AVATAR}
                   alt="User Avatar"
                   width={40}
                   height={40}
