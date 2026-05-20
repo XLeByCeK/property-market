@@ -1,153 +1,135 @@
-import axios from 'axios';
 import api from './api';
-import { getImageUrl, getMainImageUrl, PLACEHOLDER_NULL_IMAGE } from '../utils/imageUrl';
+import { getMainImageUrl, PLACEHOLDER_NULL_IMAGE } from '../utils/imageUrl';
+import {
+  Property,
+  PropertyDetails,
+  PropertyFormData,
+  PropertyFromAPI,
+} from '../types/property';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+// Реэкспорт типов — большая часть кодовой базы импортирует их именно отсюда.
+// Со временем импорты следует перенацелить на `../types/property`.
+export type {
+  Property,
+  PropertyDetails,
+  PropertyFormData,
+  PropertyFromAPI,
+} from '../types/property';
 
-// Helper function to get auth header
-const getAuthHeader = () => {
-  if (typeof window !== 'undefined') {
-    const token = localStorage.getItem('token');
-    return token ? { Authorization: `Bearer ${token}` } : {};
+/**
+ * Запускает асинхронную операцию и возвращает её результат, либо `fallback`,
+ * если случилась ошибка. Помогает не дублировать одинаковые try/catch.
+ */
+const safe = async <T>(
+  fn: () => Promise<T>,
+  fallback: T,
+  errorMessage: string
+): Promise<T> => {
+  try {
+    return await fn();
+  } catch (error) {
+    console.error(errorMessage, error);
+    return fallback;
   }
-  return {};
 };
 
-// Interface for property from API
-export interface PropertyFromAPI {
-  id: number;
-  title: string;
-  description: string;
-  price: number;
-  area: number;
-  rooms: number;
-  floor?: number;
-  total_floors?: number;
-  address: string;
-  year_built?: number;
-  status: string;
-  is_new_building: boolean;
-  is_commercial: boolean;
-  is_country: boolean;
-  created_at: string;
-  updated_at: string;
-  property_type_id: number;
-  transaction_type_id: number;
-  user_id: number;
-  city_id: number;
-  district_id?: number;
-  metro_id?: number;
-  metro_distance?: number;
-  user: {
-    id: number;
-    first_name: string;
-    last_name: string;
-    phone?: string;
-  };
-  property_type: {
-    id: number;
-    name: string;
-    description?: string;
-  };
-  transaction_type: {
-    id: number;
-    name: string;
-  };
-  city: {
-    id: number;
-    name: string;
-    region?: string;
-    country?: string;
-  };
-  district?: {
-    id: number;
-    name: string;
-  };
-  metro_station?: {
-    id: number;
-    name: string;
-    line?: string;
-    color?: string;
-  };
-  images: {
-    id: number;
-    image_url: string;
-    is_main: boolean;
-    order: number;
-  }[];
-}
+const hasToken = (): boolean =>
+  typeof window !== 'undefined' && Boolean(localStorage.getItem('token'));
 
-// Interface for property details (used in property detail page)
-export interface PropertyDetails {
-  id: number;
-  title: string;
-  description: string;
-  price: number;
-  area: number;
-  rooms: number;
-  floor?: number;
-  total_floors?: number;
-  address: string;
-  year_built?: number;
-  is_new_building: boolean;
-  is_commercial: boolean;
-  is_country: boolean;
-  created_at: string;
-  updated_at: string;
-  property_type: {
-    id: number;
-    name: string;
-  };
-  transaction_type: {
-    id: number;
-    name: string;
-  };
-  city: {
-    id: number;
-    name: string;
-  };
-  district?: {
-    id: number;
-    name: string;
-  };
-  metro_station?: {
-    id: number;
-    name: string;
-    color?: string;
-  };
-  metro_distance?: number;
-  user: {
-    id: number;
-    first_name: string;
-    last_name: string;
-    phone?: string;
-  };
-  images: {
-    id: number;
-    image_url: string;
-    is_main: boolean;
-    order: number;
-  }[];
-}
+/**
+ * Преобразует данные с API в формат для отображения в UI: подбирает основное
+ * изображение через getMainImageUrl, нормализует текст комнат/этажей и
+ * определяет, является ли объект арендой.
+ */
+export const mapPropertyFromAPI = (property: PropertyFromAPI): Property => {
+  const mainImage = getMainImageUrl(property.images, PLACEHOLDER_NULL_IMAGE);
 
-// Interface for property representation in UI
-export interface Property {
-  id: string;
-  image: string;
-  price: number;
-  propertyType: string;
-  rooms: string;
-  floors: string;
-  address: string;
-  metro: string;
-  isNewBuilding: boolean;
-  isCommercial: boolean;
-  isForRent: boolean;
-  isCountry: boolean;
-  description: string;
-}
+  const roomsText = property.rooms === 0 ? 'Студия' : `${property.rooms} комн.`;
 
-// Get property by ID
+  let floorsText = '';
+  if (property.floor && property.total_floors) {
+    floorsText = `${property.floor}/${property.total_floors} эт.`;
+  } else if (property.floor) {
+    floorsText = `${property.floor} эт.`;
+  } else if (property.total_floors) {
+    floorsText = `${property.total_floors} эт.`;
+  }
+
+  const rentKeywords = ['аренд', 'снять', 'сдать', 'rent'];
+  const descriptionLower = property.description.toLowerCase();
+  const isForRent =
+    property.transaction_type.name.toLowerCase().includes('аренд') ||
+    rentKeywords.some((keyword) => descriptionLower.includes(keyword));
+
+  return {
+    id: property.id.toString(),
+    image: mainImage,
+    price: property.price,
+    propertyType: property.property_type.name,
+    rooms: roomsText,
+    floors: floorsText,
+    address: property.address,
+    metro: property.metro_station?.name || '',
+    isNewBuilding: property.is_new_building,
+    isCommercial: property.is_commercial,
+    isForRent,
+    isCountry: property.is_country,
+    description: property.description,
+  };
+};
+
+export const transformPropertyToFormData = (property: PropertyFromAPI): PropertyFormData => ({
+  title: property.title,
+  description: property.description,
+  price: property.price,
+  area: property.area,
+  rooms: property.rooms,
+  floor: property.floor,
+  total_floors: property.total_floors,
+  address: property.address,
+  year_built: property.year_built,
+  property_type_id: property.property_type_id,
+  transaction_type_id: property.transaction_type_id,
+  city_id: property.city_id,
+  district_id: property.district_id,
+  metro_id: property.metro_id,
+  metro_distance: property.metro_distance,
+  is_new_building: property.is_new_building,
+  is_commercial: property.is_commercial,
+  is_country: property.is_country,
+  images: property.images.map((img) => img.image_url),
+});
+
+// === Получение объявлений =====================================================
+
+const fetchAndMap = async (
+  fetcher: () => Promise<unknown>,
+  errorMessage: string
+): Promise<Property[]> =>
+  safe(
+    async () => {
+      const data = (await fetcher()) as PropertyFromAPI[];
+      return Array.isArray(data) ? data.map(mapPropertyFromAPI) : [];
+    },
+    [],
+    errorMessage
+  );
+
+export const getAllProperties = () =>
+  fetchAndMap(() => api.properties.getAll(), 'Error fetching properties:');
+
+export const getNewBuildings = (limit = 8) =>
+  fetchAndMap(() => api.properties.getNewBuildings(limit), 'Error fetching new buildings:');
+
+export const getPropertiesForSale = (limit = 8) =>
+  fetchAndMap(() => api.properties.getForSale(limit), 'Error fetching properties for sale:');
+
+export const getPropertiesForRent = (limit = 8) =>
+  fetchAndMap(() => api.properties.getForRent(limit), 'Error fetching properties for rent:');
+
+export const searchProperties = (params: Record<string, any>) =>
+  fetchAndMap(() => api.properties.search(params), 'Error searching properties:');
+
 export const getPropertyById = async (id: number) => {
   try {
     return await api.properties.getById(id);
@@ -157,456 +139,103 @@ export const getPropertyById = async (id: number) => {
   }
 };
 
-// Toggle favorite status for a property
-export const toggleFavorite = async (propertyId: string | number): Promise<{favorited: boolean; message: string}> => {
-  console.log('toggleFavorite called with ID:', propertyId);
-  try {
-    // Ensure propertyId is a number
-    const numericId = typeof propertyId === 'string' ? parseInt(propertyId, 10) : propertyId;
-    
-    // Check if the parsing resulted in a valid number
-    if (isNaN(numericId)) {
-      const errorMsg = 'Invalid property ID';
-      console.error(errorMsg, propertyId);
-      throw new Error(errorMsg);
-    }
-    
-    // Check if we have an authentication token
-    const token = localStorage.getItem('token');
-    if (!token) {
-      const errorMsg = 'Authentication token not found';
-      console.error(errorMsg);
-      throw new Error(errorMsg);
-    }
-    
-    console.log('Making API call to toggle favorite for ID:', numericId);
-    
-    const response = await api.properties.toggleFavorite(numericId) as { favorited: boolean; message: string };
-    
-    console.log('Response from toggleFavorite API:', response);
-    
-    if (response && typeof response.favorited === 'boolean') {
-      return response;
-    }
-    
-    // Default response if the API doesn't return the expected format
+// === Favorites ===============================================================
+
+export const toggleFavorite = async (
+  propertyId: string | number
+): Promise<{ favorited: boolean; message: string }> => {
+  const numericId = typeof propertyId === 'string' ? parseInt(propertyId, 10) : propertyId;
+  if (Number.isNaN(numericId)) throw new Error('Invalid property ID');
+  if (!hasToken()) throw new Error('Authentication token not found');
+
+  const response = (await api.properties.toggleFavorite(numericId)) as {
+    favorited?: boolean;
+    message?: string;
+  };
+
+  if (typeof response?.favorited !== 'boolean') {
     return { favorited: false, message: 'Unknown status' };
-  } catch (error: any) {
-    console.error('Error toggling favorite status. Full error:', error);
-    if (error.response) {
-      console.error('Response status:', error.response.status);
-      console.error('Response data:', error.response.data);
-    }
-    throw error;
   }
+  return { favorited: response.favorited, message: response.message ?? '' };
 };
 
-// Get favorite properties for the current user
-export const getFavoriteProperties = async (): Promise<Property[]> => {
-  try {
-    console.log('[getFavoriteProperties] Starting to fetch favorite properties');
-    
-    const token = localStorage.getItem('token');
-    if (!token) {
-      console.warn('[getFavoriteProperties] No authentication token available when fetching favorites');
-      return [];
-    }
-    
-    // Используем API клиент вместо прямого fetch
-    const data = await api.properties.getFavorites();
-    console.log(`[getFavoriteProperties] Raw response data:`, data);
-    
-    if (!data || !Array.isArray(data)) {
-      console.error('[getFavoriteProperties] Invalid response format:', data);
-      return [];
-    }
-    
-    console.log(`[getFavoriteProperties] Found ${data.length} favorites`);
-    
-    // Преобразуем данные API в формат для UI
-    const mappedProperties = data.map(mapPropertyFromAPI);
-    console.log(`[getFavoriteProperties] Mapped ${mappedProperties.length} properties for UI`);
-    
-    return mappedProperties;
-  } catch (error: any) {
-    console.error('[getFavoriteProperties] Error fetching favorite properties:', error);
-    if (error.response?.status === 401) {
-      // Token expired or unauthorized
-      console.warn('[getFavoriteProperties] Unauthorized access to favorites. User may need to re-login.');
-    }
-    // Return empty array instead of error
-    return [];
-  }
-};
-
-// Check if a property is favorited by the current user
 export const isPropertyFavorited = async (propertyId: string | number): Promise<boolean> => {
-  console.log('[isPropertyFavorited] Checking if property is favorited:', propertyId);
-  try {
-    // Ensure we have a valid property ID
-    const numericId = typeof propertyId === 'string' ? parseInt(propertyId, 10) : propertyId;
-    if (isNaN(numericId)) {
-      console.error('[isPropertyFavorited] Invalid property ID provided:', propertyId);
-      return false;
-    }
-    
-    // Make sure we have authentication
-    const token = localStorage.getItem('token');
-    if (!token) {
-      console.log('[isPropertyFavorited] No authentication token available to check favorites');
-      return false;
-    }
+  const numericId = typeof propertyId === 'string' ? parseInt(propertyId, 10) : propertyId;
+  if (Number.isNaN(numericId) || !hasToken()) return false;
 
-    // Используем новый метод API для проверки статуса избранного
-    const response = await api.properties.checkFavorite(numericId) as { favorited: boolean };
-    console.log(`[isPropertyFavorited] Response from API:`, response);
-    
-    return response?.favorited === true;
-  } catch (error: any) {
-    console.error('[isPropertyFavorited] Error checking if property is favorited:', error);
-    if (error.response) {
-      console.error('[isPropertyFavorited] Response status:', error.response.status);
-      console.error('[isPropertyFavorited] Response data:', error.response.data);
-    }
-    return false;
-  }
+  return safe(
+    async () => {
+      const response = (await api.properties.checkFavorite(numericId)) as { favorited?: boolean };
+      return response?.favorited === true;
+    },
+    false,
+    '[isPropertyFavorited] Error:'
+  );
 };
 
-/**
- * Преобразует данные с API в формат для отображения в UI
- */
-export const mapPropertyFromAPI = (property: PropertyFromAPI): Property => {
-  // Основное изображение или заглушка, если нет изображений.
-  // Все image_url из БД могут быть относительными (/property_images/...) — getMainImageUrl сам подставит базовый URL Yandex Object Storage.
-  const mainImage = getMainImageUrl(property.images, PLACEHOLDER_NULL_IMAGE);
-
-  // Определение типа комнат
-  let roomsText = '';
-  if (property.rooms === 0) {
-    roomsText = 'Студия';
-  } else {
-    roomsText = `${property.rooms} комн.`;
-  }
-  
-  // Определение этажности
-  let floorsText = '';
-  if (property.floor && property.total_floors) {
-    floorsText = `${property.floor}/${property.total_floors} эт.`;
-  } else if (property.floor) {
-    floorsText = `${property.floor} эт.`;
-  } else if (property.total_floors) {
-    floorsText = `${property.total_floors} эт.`;
-  }
-  
-  // Определение метро
-  const metroName = property.metro_station?.name || '';
-  
-  // Определяем, является ли объект арендным
-  const isForRent = property.transaction_type.name.toLowerCase().includes('аренд') || 
-                    property.description.toLowerCase().includes('аренд') ||
-                    property.description.toLowerCase().includes('снять') ||
-                    property.description.toLowerCase().includes('сдать') ||
-                    property.description.toLowerCase().includes('rent');
-  
-  return {
-    id: property.id.toString(),
-    image: mainImage,
-    price: property.price,
-    propertyType: property.property_type.name,
-    rooms: roomsText,
-    floors: floorsText,
-    address: property.address,
-    metro: metroName,
-    isNewBuilding: property.is_new_building,
-    isCommercial: property.is_commercial,
-    isForRent: isForRent,
-    isCountry: property.is_country,
-    description: property.description
-  };
+export const getFavoriteProperties = async (): Promise<Property[]> => {
+  if (!hasToken()) return [];
+  return fetchAndMap(() => api.properties.getFavorites(), '[getFavoriteProperties] Error:');
 };
 
-/**
- * Получает все объекты недвижимости с сервера
- */
-export const getAllProperties = async (): Promise<Property[]> => {
-  try {
-    const data = await api.properties.getAll() as PropertyFromAPI[];
-    return data.map(mapPropertyFromAPI);
-  } catch (error) {
-    console.error('Error fetching properties:', error);
-    // Возвращаем пустой массив вместо ошибки
-    return [];
-  }
-};
+// === Reference data ==========================================================
 
-/**
- * Получает новостройки 
- */
-export const getNewBuildings = async (limit = 8): Promise<Property[]> => {
-  try {
-    const data = await api.properties.getNewBuildings(limit) as PropertyFromAPI[];
-    return data.map(mapPropertyFromAPI);
-  } catch (error) {
-    console.error('Error fetching new buildings:', error);
-    // Возвращаем пустой массив вместо ошибки
-    return [];
-  }
-};
+export const getPropertyTypes = () =>
+  safe(() => api.properties.getPropertyTypes(), [], 'Error fetching property types:');
 
-/**
- * Получает объекты для покупки
- */
-export const getPropertiesForSale = async (limit = 8): Promise<Property[]> => {
-  try {
-    const data = await api.properties.getForSale(limit) as PropertyFromAPI[];
-    return data.map(mapPropertyFromAPI);
-  } catch (error) {
-    console.error('Error fetching properties for sale:', error);
-    // Возвращаем пустой массив вместо ошибки
-    return [];
-  }
-};
+export const getTransactionTypes = () =>
+  safe(() => api.properties.getTransactionTypes(), [], 'Error fetching transaction types:');
 
-/**
- * Получает объекты для аренды
- */
-export const getPropertiesForRent = async (limit = 8): Promise<Property[]> => {
-  try {
-    const data = await api.properties.getForRent(limit) as PropertyFromAPI[];
-    return data.map(mapPropertyFromAPI);
-  } catch (error) {
-    console.error('Error fetching properties for rent:', error);
-    // Возвращаем пустой массив вместо ошибки
-    return [];
-  }
-};
+export const getCities = () =>
+  safe(() => api.properties.getCities(), [], 'Error fetching cities:');
 
-// Helper functions for property data transformations
-export const transformPropertyToFormData = (property: PropertyFromAPI): PropertyFormData => {
-  return {
-    title: property.title,
-    description: property.description,
-    price: property.price,
-    area: property.area,
-    rooms: property.rooms,
-    floor: property.floor,
-    total_floors: property.total_floors,
-    address: property.address,
-    year_built: property.year_built,
-    property_type_id: property.property_type_id,
-    transaction_type_id: property.transaction_type_id,
-    city_id: property.city_id,
-    district_id: property.district_id,
-    metro_id: property.metro_id,
-    metro_distance: property.metro_distance,
-    is_new_building: property.is_new_building,
-    is_commercial: property.is_commercial,
-    is_country: property.is_country,
-    images: property.images.map(img => img.image_url),
-  };
-};
+export const getDistrictsByCityId = (cityId: number) =>
+  safe(() => api.properties.getDistrictsByCityId(cityId), [], 'Error fetching districts:');
 
-// Interface for property form data
-export interface PropertyFormData {
-  title: string;
-  description: string;
-  price: number;
-  area: number;
-  rooms: number;
-  floor?: number;
-  total_floors?: number;
-  address: string;
-  year_built?: number;
-  property_type_id: number;
-  transaction_type_id: number;
-  city_id: number;
-  district_id?: number;
-  metro_id?: number;
-  metro_distance?: number;
-  is_new_building: boolean;
-  is_commercial: boolean;
-  is_country: boolean;
-  images: string[];
-}
+export const getMetroStationsByCityId = (cityId: number) =>
+  safe(() => api.properties.getMetroStationsByCityId(cityId), [], 'Error fetching metro:');
 
-// Methods for reference data
-export const getPropertyTypes = async () => {
-  try {
-    return await api.properties.getPropertyTypes();
-  } catch (error) {
-    console.error('Error fetching property types:', error);
-    return [];
-  }
-};
+// === Mutations ===============================================================
 
-export const getTransactionTypes = async () => {
-  try {
-    return await api.properties.getTransactionTypes();
-  } catch (error) {
-    console.error('Error fetching transaction types:', error);
-    return [];
-  }
-};
-
-export const getCities = async () => {
-  try {
-    return await api.properties.getCities();
-  } catch (error) {
-    console.error('Error fetching cities:', error);
-    return [];
-  }
-};
-
-export const getDistrictsByCityId = async (cityId: number) => {
-  try {
-    return await api.properties.getDistrictsByCityId(cityId);
-  } catch (error) {
-    console.error('Error fetching districts:', error);
-    return [];
-  }
-};
-
-export const getMetroStationsByCityId = async (cityId: number) => {
-  try {
-    return await api.properties.getMetroStationsByCityId(cityId);
-  } catch (error) {
-    console.error('Error fetching metro stations:', error);
-    return [];
-  }
-};
-
-// Добавим интерфейс для ответа загрузки изображений
 interface UploadImagesResponse {
   imageUrls: string[];
   [key: string]: any;
 }
 
-// Methods for image upload
 export const uploadPropertyImages = async (formData: FormData): Promise<UploadImagesResponse> => {
-  try {
-    console.log('Uploading property images...');
-    const response = (await api.properties.uploadImages(formData)) as UploadImagesResponse;
-    console.log('Upload response:', response);
-
-    // Сервер возвращает относительные пути вида `/property_images/uploads/<uuid>.jpg`.
-    // Сохраняем их в исходном виде — в БД попадает именно относительный путь,
-    // а абсолютный URL для рендера соберёт getImageUrl на клиенте.
-    return response;
-  } catch (error) {
-    console.error('Error uploading images:', error);
-    throw error;
-  }
+  // Сервер возвращает относительные пути `/property_images/uploads/<uuid>.jpg`,
+  // абсолютный URL для рендера соберёт getImageUrl на клиенте.
+  return (await api.properties.uploadImages(formData)) as UploadImagesResponse;
 };
 
-// Create a new property
-export const createProperty = async (propertyData: PropertyFormData) => {
-  try {
-    return await api.properties.create(propertyData);
-  } catch (error) {
-    console.error('Error creating property:', error);
-    throw error;
-  }
-};
+export const createProperty = (propertyData: PropertyFormData) =>
+  api.properties.create(propertyData);
 
-// Update an existing property
-export const updateProperty = async (id: number, propertyData: PropertyFormData) => {
-  try {
-    return await api.properties.update(id, propertyData);
-  } catch (error) {
-    console.error('Error updating property:', error);
-    throw error;
-  }
-};
+export const updateProperty = (id: number, propertyData: PropertyFormData) =>
+  api.properties.update(id, propertyData);
 
-// Поиск недвижимости с параметрами
-export const searchProperties = async (params: Record<string, any>): Promise<Property[]> => {
-  try {
-    const data = await api.properties.search(params);
-    if (!data || !Array.isArray(data)) {
-      return [];
-    }
-    return data.map(mapPropertyFromAPI);
-  } catch (error) {
-    console.error('Error searching properties:', error);
-    return [];
-  }
-};
+// === View history ============================================================
 
-// Record property view history for logged-in user
 export const recordPropertyView = async (propertyId: number): Promise<boolean> => {
-  try {
-    // Check if user is logged in
-    const token = localStorage.getItem('token');
-    if (!token) {
-      console.log('User not logged in, skipping view history recording');
-      return false;
-    }
-    
-    // Используем sessionStorage для дедупликации в рамках текущей сессии браузера
-    // Это позволит избежать дублирования запросов при перерендеринге компонентов
-    const viewedKey = `property_viewed_${propertyId}_session`;
-    const sessionViewed = sessionStorage.getItem(viewedKey);
-    
-    if (sessionViewed) {
-      console.log('Property was already recorded in this session, skipping');
+  if (!hasToken()) return false;
+
+  // Дедуплицируем повторные записи в рамках одной сессии — компоненты могут
+  // перерендериваться несколько раз и каждый раз триггерить запись.
+  const viewedKey = `property_viewed_${propertyId}_session`;
+  if (sessionStorage.getItem(viewedKey)) return true;
+  sessionStorage.setItem(viewedKey, 'true');
+
+  return safe(
+    async () => {
+      await api.properties.recordView(propertyId);
       return true;
-    }
-    
-    // Отмечаем в sessionStorage, что объект был просмотрен в этой сессии
-    sessionStorage.setItem(viewedKey, 'true');
-    
-    // Делаем запрос к серверу для записи просмотра
-    console.log(`Отправка запроса на запись просмотра объекта ${propertyId}...`);
-    const response = await api.properties.recordView(propertyId);
-    
-    console.log('Ответ сервера на запись просмотра:', response);
-    return true;
-  } catch (error) {
-    console.error('Error recording property view:', error);
-    return false;
-  }
+    },
+    false,
+    'Error recording property view:'
+  );
 };
 
-// Get user's view history
 export const getViewHistory = async (): Promise<Property[]> => {
-  try {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      console.log('User not logged in, cannot fetch view history');
-      return [];
-    }
-    
-    console.log('Fetching view history from API...');
-    const data = await api.properties.getViewHistory();
-    console.log('View history data received:', data);
-    
-    if (!data) {
-      console.error('Received empty response for view history');
-      return [];
-    }
-    
-    if (!Array.isArray(data)) {
-      console.error('Received non-array response for view history:', typeof data, data);
-      return [];
-    }
-    
-    if (data.length === 0) {
-      console.log('No view history found');
-      return [];
-    }
-    
-    console.log(`Mapping ${data.length} view history items to UI format`);
-    const mappedData = data.map(mapPropertyFromAPI);
-    console.log('Mapped view history:', mappedData);
-    
-    return mappedData;
-  } catch (error: any) {
-    console.error('Error fetching view history:', error);
-    // Проверяем, есть ли информация об ответе сервера
-    if (error.response) {
-      console.error('Server response status:', error.response.status);
-      console.error('Server response data:', error.response.data);
-    }
-    return [];
-  }
-}; 
+  if (!hasToken()) return [];
+  return fetchAndMap(() => api.properties.getViewHistory(), 'Error fetching view history:');
+};

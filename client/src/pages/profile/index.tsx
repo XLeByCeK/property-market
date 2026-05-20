@@ -1,141 +1,56 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { NextPage } from 'next';
-import { useRouter } from 'next/router';
-import Head from 'next/head';
-import { Header } from '../../components/layout/Header/Header';
-import { Footer } from '../../components/layout/Footer/Footer';
-import { useAuth } from '../../context/AuthContext';
-import Link from 'next/link';
+import { ProfileLayout } from '../../components/layout/ProfileLayout';
+import { useRequireAuth } from '../../hooks/useRequireAuth';
+
+const ROLE_LABELS: Record<string, string> = {
+  BUYER: 'Покупатель',
+  SELLER: 'Продавец',
+  ADMIN: 'Администратор',
+};
+
+const InfoRow: React.FC<{ label: string; value: React.ReactNode }> = ({ label, value }) => (
+  <div className="row mb-4 p-2 bg-light rounded">
+    <div className="col-sm-3">
+      <p className="text-muted mb-0 fw-bold">{label}</p>
+    </div>
+    <div className="col-sm-9">
+      <p className="mb-0">{value || 'Не указано'}</p>
+    </div>
+  </div>
+);
+
+const Spinner = () => (
+  <div className="container mt-5 text-center">
+    <div className="spinner-border" role="status">
+      <span className="visually-hidden">Загрузка...</span>
+    </div>
+  </div>
+);
 
 const ProfilePage: NextPage = () => {
-  const { user, isAuthenticated, isLoading } = useAuth();
-  const router = useRouter();
+  const { user, isLoading } = useRequireAuth('/');
 
-  useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      router.push('/');
-    }
-  }, [isAuthenticated, isLoading, router]);
-
-  if (isLoading) {
-    return (
-      <div className="container mt-5 text-center">
-        <div className="spinner-border" role="status">
-          <span className="visually-hidden">Загрузка...</span>
-        </div>
-      </div>
-    );
-  }
-
-  if (!user) {
-    return null; // This handles the case where useEffect hasn't redirected yet
-  }
-
-  console.log('User data in profile:', user);
+  if (isLoading) return <Spinner />;
+  if (!user) return null;
 
   return (
-    <>
-      <Head>
-        <title>Профиль | Property Market</title>
-        <meta name="description" content="Личный кабинет пользователя" />
-      </Head>
+    <ProfileLayout title="Личный кабинет" description="Личный кабинет пользователя">
+      <h2 className="card-title mb-4 border-bottom pb-2">Личные данные</h2>
 
-      <Header />
+      <InfoRow label="Имя:" value={user.firstName} />
+      <InfoRow label="Фамилия:" value={user.lastName} />
+      <InfoRow label="Email:" value={user.email} />
+      <InfoRow label="Роль:" value={ROLE_LABELS[user.role] ?? user.role} />
 
-      <main className="container mt-5 mb-5 profile-page">
-        <div className="row">
-          <div className="col-12">
-            <h1 className="mb-4 p-3 bg-light rounded shadow-sm mt-5">Личный кабинет</h1>
-          </div>
-        </div>
-
-        <div className="row">
-          <div className="col-lg-3 mb-4">
-            <div className="card h-100 shadow-sm">
-              <div className="card-body d-flex flex-column">
-                <h5 className="card-title mb-4 border-bottom pb-2">Навигация</h5>
-                <div className="list-group flex-grow-1 nav-pills">
-                  <button className="list-group-item list-group-item-action active py-3 mb-2">
-                    Личные данные
-                  </button>
-                  <Link href="/profile/favorites" className="list-group-item list-group-item-action py-3 mb-2">
-                    Избранное
-                  </Link>
-                  <Link href="/profile/history" className="list-group-item list-group-item-action py-3 mb-2">
-                    История просмотров
-                  </Link>
-                  <Link href="/profile/properties" className="list-group-item list-group-item-action py-3">
-                    Мои объявления
-                  </Link>
-                  <div className="flex-grow-1"></div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="col-lg-9">
-            <div className="card h-100 shadow-sm">
-              <div className="card-body">
-                <h2 className="card-title mb-4 border-bottom pb-2">Личные данные</h2>
-                
-                <div className="row mb-4 p-2 bg-light rounded">
-                  <div className="col-sm-3">
-                    <p className="text-muted mb-0 fw-bold">Имя:</p>
-                  </div>
-                  <div className="col-sm-9">
-                    <p className="mb-0">{user.firstName || 'Не указано'}</p>
-                  </div>
-                </div>
-                
-                <div className="row mb-4 p-2 bg-light rounded">
-                  <div className="col-sm-3">
-                    <p className="text-muted mb-0 fw-bold">Фамилия:</p>
-                  </div>
-                  <div className="col-sm-9">
-                    <p className="mb-0">{user.lastName || 'Не указано'}</p>
-                  </div>
-                </div>
-                
-                <div className="row mb-4 p-2 bg-light rounded">
-                  <div className="col-sm-3">
-                    <p className="text-muted mb-0 fw-bold">Email:</p>
-                  </div>
-                  <div className="col-sm-9">
-                    <p className="mb-0">{user.email}</p>
-                  </div>
-                </div>
-                
-                <div className="row mb-4 p-2 bg-light rounded">
-                  <div className="col-sm-3">
-                    <p className="text-muted mb-0 fw-bold">Роль:</p>
-                  </div>
-                  <div className="col-sm-9">
-                    <p className="mb-0">
-                      {user.role === 'BUYER' ? 'Покупатель' : 
-                       user.role === 'SELLER' ? 'Продавец' : 
-                       user.role === 'ADMIN' ? 'Администратор' : 
-                       user.role}
-                    </p>
-                  </div>
-                </div>
-                
-                <div className="mt-5">
-                  <button className="btn btn-primary me-2 px-4 py-2 mb-2 mb-md-0">
-                    Редактировать профиль
-                  </button>
-                  <button className="btn btn-outline-secondary px-4 py-2">
-                    Изменить пароль
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </main>
-
-      <Footer />
-    </>
+      <div className="mt-5">
+        <button className="btn btn-primary me-2 px-4 py-2 mb-2 mb-md-0">
+          Редактировать профиль
+        </button>
+        <button className="btn btn-outline-secondary px-4 py-2">Изменить пароль</button>
+      </div>
+    </ProfileLayout>
   );
 };
 
-export default ProfilePage; 
+export default ProfilePage;

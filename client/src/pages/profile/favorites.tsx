@@ -1,46 +1,36 @@
 import React, { useEffect, useState } from 'react';
 import { NextPage } from 'next';
-import { useRouter } from 'next/router';
-import Head from 'next/head';
 import Link from 'next/link';
-import { Header } from '../../components/layout/Header/Header';
-import { Footer } from '../../components/layout/Footer/Footer';
-import { useAuth } from '../../context/AuthContext';
-import { Property, getFavoriteProperties } from '../../services/propertyService';
+import { ProfileLayout } from '../../components/layout/ProfileLayout';
 import { PropertyCard } from '../../components/features/property/card/PropertyCard';
+import { getFavoriteProperties } from '../../services/propertyService';
+import { Property } from '../../types/property';
+import { useRequireAuth } from '../../hooks/useRequireAuth';
 
 const ProfileFavoritesPage: NextPage = () => {
-  const { user, isAuthenticated, isLoading } = useAuth();
-  const router = useRouter();
+  const { user, isLoading } = useRequireAuth('/');
   const [favorites, setFavorites] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Check authentication
-  useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      router.push('/');
-    }
-  }, [isAuthenticated, isLoading, router]);
-
-  // Fetch user favorites
   useEffect(() => {
     if (!user) return;
-
-    const fetchFavorites = async () => {
+    let cancelled = false;
+    (async () => {
       try {
         setLoading(true);
         const response = await getFavoriteProperties();
-        setFavorites(response);
+        if (!cancelled) setFavorites(response);
       } catch (err) {
         console.error('Error fetching favorites:', err);
-        setError('Не удалось загрузить избранные объекты. Пожалуйста, попробуйте позже.');
+        if (!cancelled) setError('Не удалось загрузить избранные объекты. Пожалуйста, попробуйте позже.');
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
+    })();
+    return () => {
+      cancelled = true;
     };
-
-    fetchFavorites();
   }, [user]);
 
   if (isLoading || loading) {
@@ -53,94 +43,44 @@ const ProfileFavoritesPage: NextPage = () => {
     );
   }
 
-  if (!user) {
-    return null; // This handles the case where useEffect hasn't redirected yet
-  }
+  if (!user) return null;
 
   return (
-    <>
-      <Head>
-        <title>Избранное | Property Market</title>
-        <meta name="description" content="Избранные объявления пользователя" />
-      </Head>
+    <ProfileLayout title="Избранное" description="Избранные объявления пользователя">
+      <h2 className="card-title mb-4 border-bottom pb-2">Избранные объекты</h2>
 
-      <Header />
-
-      <main className="container mt-5 mb-5 profile-page">
-        <div className="row">
-          <div className="col-12">
-            <h1 className="mb-4 p-3 bg-light rounded shadow-sm mt-5">Избранное</h1>
-          </div>
+      {error && (
+        <div className="alert alert-danger" role="alert">
+          {error}
         </div>
+      )}
 
-        <div className="row">
-          <div className="col-lg-3 mb-4">
-            <div className="card h-100 shadow-sm">
-              <div className="card-body d-flex flex-column">
-                <h5 className="card-title mb-4 border-bottom pb-2">Навигация</h5>
-                <div className="list-group flex-grow-1 nav-pills">
-                  <Link href="/profile" className="list-group-item list-group-item-action py-3 mb-2">
-                    Личные данные
-                  </Link>
-                  <Link href="/profile/favorites" className="list-group-item list-group-item-action active py-3 mb-2">
-                    Избранное
-                  </Link>
-                  <Link href="/profile/history" className="list-group-item list-group-item-action py-3 mb-2">
-                    История просмотров
-                  </Link>
-                  <Link href="/profile/properties" className="list-group-item list-group-item-action py-3">
-                    Мои объявления
-                  </Link>
-                  <div className="flex-grow-1"></div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="col-lg-9">
-            <div className="card h-100 shadow-sm">
-              <div className="card-body">
-                <h2 className="card-title mb-4 border-bottom pb-2">Избранные объекты</h2>
-                
-                {error && (
-                  <div className="alert alert-danger" role="alert">
-                    {error}
-                  </div>
-                )}
-                
-                {favorites.length === 0 && !loading && !error ? (
-                  <div className="text-center my-5">
-                    <p className="fs-5 text-muted">У вас пока нет избранных объектов</p>
-                    <Link href="/" className="btn btn-primary mt-3">
-                      Перейти к поиску объектов
-                    </Link>
-                  </div>
-                ) : (
-                  <div className="property-grid">
-                    {favorites.map(property => (
-                      <PropertyCard
-                        key={property.id}
-                        id={property.id}
-                        image={property.image}
-                        price={property.price}
-                        propertyType={property.propertyType}
-                        rooms={property.rooms}
-                        floors={property.floors}
-                        address={property.address}
-                        metro={property.metro}
-                      />
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
+      {favorites.length === 0 && !error ? (
+        <div className="text-center my-5">
+          <p className="fs-5 text-muted">У вас пока нет избранных объектов</p>
+          <Link href="/" className="btn btn-primary mt-3">
+            Перейти к поиску объектов
+          </Link>
         </div>
-      </main>
-
-      <Footer />
-    </>
+      ) : (
+        <div className="property-grid">
+          {favorites.map((property) => (
+            <PropertyCard
+              key={property.id}
+              id={property.id}
+              image={property.image}
+              price={property.price}
+              propertyType={property.propertyType}
+              rooms={property.rooms}
+              floors={property.floors}
+              address={property.address}
+              metro={property.metro}
+            />
+          ))}
+        </div>
+      )}
+    </ProfileLayout>
   );
 };
 
-export default ProfileFavoritesPage; 
+export default ProfileFavoritesPage;

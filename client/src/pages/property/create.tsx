@@ -4,19 +4,11 @@ import { useRouter } from 'next/router';
 import Head from 'next/head';
 import { Layout } from '../../components/layout/Layout';
 import PropertyForm from '../../components/features/property/PropertyForm';
-import { useAuth } from '../../context/AuthContext';
+import { useRequireAuth } from '../../hooks/useRequireAuth';
 
 const CreatePropertyPage: NextPage = () => {
   const router = useRouter();
-  const { isAuthenticated, isLoading } = useAuth();
-
-  // Проверяем авторизацию для доступа к странице
-  React.useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      // Если пользователь не авторизован, перенаправляем на страницу входа
-      router.push('/login?returnUrl=/property/create');
-    }
-  }, [isAuthenticated, isLoading, router]);
+  const { isAuthenticated, isLoading } = useRequireAuth('/login?returnUrl=/property/create');
 
   // Если проверка авторизации еще выполняется, показываем индикатор загрузки
   if (isLoading) {

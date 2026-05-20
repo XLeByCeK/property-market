@@ -1,0 +1,284 @@
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+.page {
+  padding: 80px 0 50px;
+}
+
+.banner {
+  background-color: #fff;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.bannerContent {
+  display: flex;
+  width: 100%;
+}
+
+.imageContainer {
+  flex: 1;
+  max-width: 50%;
+  position: relative;
+  overflow: hidden;
+}
+
+.image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.formContainer {
+  flex: 1;
+  max-width: 50%;
+  padding: 30px;
+  background-color: #fff;
+}
+
+.formContainer h1 {
+  font-size: 24px;
+  margin-bottom: 10px;
+  color: #333;
+}
+
+.formContainer p {
+  color: #666;
+  margin-bottom: 20px;
+  font-size: 15px;
+}
+
+.form {
+  width: 100%;
+}
+
+.formRow {
+  margin-bottom: 12px;
+}
+
+.formRowDouble {
+  display: flex;
+  gap: 10px;
+}
+
+.formRow input,
+.formRow select,
+.formRowDouble input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.formRow input:focus,
+.formRow select:focus,
+.formRowDouble input:focus {
+  outline: none;
+  border-color: #4a76a8;
+  box-shadow: 0 0 0 2px rgba(74, 118, 168, 0.2);
+}
+
+.evaluateButton,
+.listButton {
+  width: 100%;
+  padding: 12px;
+  background-color: #4a76a8;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.evaluateButton:hover,
+.listButton:hover {
+  background-color: #3d6293;
+}
+
+.results {
+  max-width: 1200px;
+  margin: 30px auto 0;
+  padding: 25px;
+  background-color: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.results h2 {
+  font-size: 22px;
+  margin-bottom: 10px;
+  color: #333;
+}
+
+.note {
+  color: #666;
+  margin-bottom: 20px;
+  font-size: 14px;
+}
+
+.priceRanges {
+  display: flex;
+  gap: 15px;
+  margin: 25px 0;
+}
+
+.priceRange {
+  flex: 1;
+  padding: 20px;
+  border-radius: 8px;
+  text-align: center;
+  position: relative;
+}
+
+.priceRangeLow {
+  background-color: #ffefd5;
+}
+
+.priceRangeMarket {
+  background-color: #e6f7e6;
+}
+
+.priceRangeHigh {
+  background-color: #ffe6e6;
+}
+
+.priceLabel {
+  font-weight: 600;
+  margin-bottom: 10px;
+  font-size: 14px;
+}
+
+.priceRangeLow .priceLabel {
+  color: #ff8c00;
+}
+
+.priceRangeMarket .priceLabel {
+  color: #2e8b57;
+}
+
+.priceRangeHigh .priceLabel {
+  color: #dc3545;
+}
+
+.priceValue {
+  font-size: 20px;
+  font-weight: 700;
+  color: #333;
+}
+
+.yourPriceMarker {
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #4a76a8;
+  color: white;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.benefitsList {
+  margin: 25px 0;
+  padding: 0;
+  list-style: none;
+}
+
+.benefitsList li {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 12px;
+  line-height: 1.5;
+  font-size: 14px;
+}
+
+.checkmark {
+  color: #2e8b57;
+  font-weight: bold;
+  margin-right: 10px;
+  font-size: 16px;
+}
+
+.marketBadge {
+  display: inline-block;
+  background-color: #e6f7e6;
+  color: #2e8b57;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.loading {
+  text-align: center;
+  padding: 30px;
+}
+
+.spinner {
+  display: inline-block;
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(74, 118, 168, 0.2);
+  border-radius: 50%;
+  border-top-color: #4a76a8;
+  animation: spin 1s linear infinite;
+  margin-bottom: 15px;
+}
+
+.error {
+  padding: 20px;
+  background-color: #fff3f3;
+  border-left: 4px solid #dc3545;
+  color: #dc3545;
+  border-radius: 4px;
+}
+
+.separator {
+  height: 1px;
+  background: linear-gradient(
+    to right,
+    rgba(74, 118, 168, 0.1),
+    rgba(74, 118, 168, 0.5),
+    rgba(74, 118, 168, 0.1)
+  );
+  margin: 30px 0;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 991.98px) {
+  .bannerContent {
+    flex-direction: column;
+  }
+
+  .imageContainer {
+    max-width: 100%;
+    height: 250px;
+  }
+
+  .formContainer {
+    max-width: 100%;
+    padding: 20px;
+  }
+
+  .priceRanges {
+    flex-direction: column;
+    gap: 30px;
+  }
+
+  .yourPriceMarker {
+    top: -10px;
+  }
+}

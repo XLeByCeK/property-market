@@ -1,20 +1,11 @@
-import React, { useEffect } from 'react';
-import { useRouter } from 'next/router';
+import React from 'react';
 import { NextPage } from 'next';
 import { Layout } from '../../components/layout/Layout';
 import PropertyForm from '../../components/features/property/PropertyForm';
-import { useAuth } from '../../context/AuthContext';
+import { useRequireAuth } from '../../hooks/useRequireAuth';
 
 const NewPropertyPage: NextPage = () => {
-  const { isAuthenticated, isLoading } = useAuth();
-  const router = useRouter();
-
-  // Redirect to login if user is not authenticated
-  useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      router.push('/login');
-    }
-  }, [isAuthenticated, isLoading, router]);
+  const { isAuthenticated, isLoading } = useRequireAuth('/login');
 
   if (isLoading) {
     return (
@@ -26,9 +17,7 @@ const NewPropertyPage: NextPage = () => {
     );
   }
 
-  if (!isAuthenticated) {
-    return null; // Don't render anything while redirecting
-  }
+  if (!isAuthenticated) return null;
 
   return (
     <Layout>
@@ -40,4 +29,4 @@ const NewPropertyPage: NextPage = () => {
   );
 };
 
-export default NewPropertyPage; 
+export default NewPropertyPage;

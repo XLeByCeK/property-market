@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useAuth } from '../../../../context/AuthContext';
 import { AuthModal } from '../../auth/AuthModal';
-import { toggleFavorite, isPropertyFavorited } from '../../../../services/propertyService';
+import { useFavoriteToggle } from '../../../../hooks/useFavoriteToggle';
+import { formatPrice } from '../../../../utils/formatters';
 
 interface PropertyCardProps {
   id: string;
@@ -28,86 +28,17 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({
   metro,
   isFavorited = false,
 }) => {
-  const [isFavorite, setIsFavorite] = useState(isFavorited);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
-  const [isToggling, setIsToggling] = useState(false);
-  const { isAuthenticated, user } = useAuth();
-  
-  // Проверяем статус избранного при загрузке и при изменении аутентификации
-  useEffect(() => {
-    if (isAuthenticated) {
-      const checkFavoriteStatus = async () => {
-        try {
-          console.log(`Checking favorite status for property: ${id}`);
-          const favorited = await isPropertyFavorited(id);
-          console.log(`Property ${id} favorite status: ${favorited}`);
-          setIsFavorite(favorited);
-        } catch (error) {
-          console.error(`Error checking favorite status for property ${id}:`, error);
-        }
-      };
-      
-      checkFavoriteStatus();
-    }
-  }, [id, isAuthenticated]);
+  const { isFavorite, isToggling, toggle } = useFavoriteToggle({
+    propertyId: id,
+    initialFavorited: isFavorited,
+    onUnauthorized: () => setIsAuthModalOpen(true),
+  });
 
-  const handleToggleFavorite = async (e: React.MouseEvent) => {
-    console.log('Toggling favorite for property ID:', id);
+  const handleToggleFavorite = (e: React.MouseEvent) => {
     e.preventDefault();
-    e.stopPropagation(); // Prevent the link from being followed
-
-    if (!isAuthenticated) {
-      console.log('User is not authenticated. Opening auth modal.');
-      setIsAuthModalOpen(true);
-      return;
-    }
-
-    if (isToggling) {
-      console.log('Already toggling favorite status. Ignoring request.');
-      return; // Prevent multiple clicks
-    }
-
-    console.log('Starting favorite toggle process. Current state:', isFavorite ? 'favorited' : 'not favorited');
-    
-    try {
-      setIsToggling(true);
-      const numericId = parseInt(id, 10);
-      
-      // Ensure we have a valid number
-      if (isNaN(numericId)) {
-        console.error('Invalid property ID:', id);
-        return;
-      }
-      
-      console.log('Making API call to toggle favorite for ID:', numericId);
-      
-      const result = await toggleFavorite(numericId);
-      
-      console.log('Toggle favorite API call successful. Result:', result);
-      
-      // Update local state based on the API response
-      setIsFavorite(result.favorited);
-      console.log('Updated favorite state to:', result.favorited ? 'favorited' : 'not favorited');
-    } catch (error: any) {
-      console.error('Error toggling favorite status. Full error:', error);
-      if (error.response) {
-        console.error('Response status:', error.response.status);
-        console.error('Response data:', error.response.data);
-        
-        // If unauthorized, open auth modal
-        if (error.response.status === 401) {
-          setIsAuthModalOpen(true);
-        }
-      }
-    } finally {
-      setIsToggling(false);
-      console.log('Favorite toggle process completed.');
-    }
-  };
-
-  // Форматирование цены: 1000000 -> 1 000 000
-  const formatPrice = (price: number) => {
-    return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+    e.stopPropagation();
+    toggle();
   };
 
   return (
@@ -123,14 +54,24 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({
               priority
               className="property-image object-cover"
             />
-            <button 
+            <button
               className={`favorite-button ${isFavorite ? 'active' : ''}`}
               onClick={handleToggleFavorite}
               disabled={isToggling}
-              aria-label={isFavorite ? "Remove from favorites" : "Add to favorites"}
+              aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
             >
-              <svg className="heart-icon" fill={isFavorite ? "currentColor" : "none"} viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+              <svg
+                className="heart-icon"
+                fill={isFavorite ? 'currentColor' : 'none'}
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+                />
               </svg>
             </button>
           </div>
@@ -151,10 +92,7 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({
           </div>
         </div>
       </Link>
-      <AuthModal 
-        isOpen={isAuthModalOpen} 
-        onClose={() => setIsAuthModalOpen(false)} 
-      />
+      <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
     </>
   );
-}; 
+};

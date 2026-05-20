@@ -3,131 +3,50 @@ import { useRouter } from 'next/router';
 import { NextPage } from 'next';
 import { Layout } from '../../../components/layout/Layout';
 import PropertyForm from '../../../components/features/property/PropertyForm';
-import { useAuth } from '../../../context/AuthContext';
-import api from '../../../services/api';
-
-// Interface for API property data
-interface PropertyData {
-  id: number;
-  title: string;
-  description: string;
-  price: number;
-  area: number;
-  rooms: number;
-  floor?: number;
-  total_floors?: number;
-  address: string;
-  year_built?: number;
-  property_type_id: number;
-  transaction_type_id: number;
-  city_id: number;
-  district_id?: number;
-  metro_id?: number;
-  metro_distance?: number;
-  is_new_building: boolean;
-  is_commercial: boolean;
-  is_country: boolean;
-  user_id: number;
-  images: Array<{
-    id: number;
-    image_url: string;
-    is_main: boolean;
-    order: number;
-  }>;
-}
-
-// Interface for form property data
-interface PropertyFormData {
-  title: string;
-  description: string;
-  price: number;
-  area: number;
-  rooms: number;
-  floor?: number;
-  total_floors?: number;
-  address: string;
-  year_built?: number;
-  property_type_id: number;
-  transaction_type_id: number;
-  city_id: number;
-  district_id?: number;
-  metro_id?: number;
-  metro_distance?: number;
-  is_new_building: boolean;
-  is_commercial: boolean;
-  is_country: boolean;
-  images: string[];
-}
-
-// Convert API property data to form format
-const mapPropertyDataToFormData = (property: PropertyData): PropertyFormData => {
-  return {
-    title: property.title,
-    description: property.description,
-    price: property.price,
-    area: property.area,
-    rooms: property.rooms,
-    floor: property.floor,
-    total_floors: property.total_floors,
-    address: property.address,
-    year_built: property.year_built,
-    property_type_id: property.property_type_id,
-    transaction_type_id: property.transaction_type_id,
-    city_id: property.city_id,
-    district_id: property.district_id,
-    metro_id: property.metro_id,
-    metro_distance: property.metro_distance,
-    is_new_building: property.is_new_building,
-    is_commercial: property.is_commercial,
-    is_country: property.is_country,
-    images: property.images.map(img => img.image_url),
-  };
-};
+import { useRequireAuth } from '../../../hooks/useRequireAuth';
+import { PropertyFormData, PropertyFromAPI } from '../../../types/property';
+import * as propertyService from '../../../services/propertyService';
 
 const EditPropertyPage: NextPage = () => {
-  const { isAuthenticated, isLoading, user } = useAuth();
+  const { isAuthenticated, isLoading, user } = useRequireAuth('/login');
   const router = useRouter();
   const { id } = router.query;
+
   const [error, setError] = useState<string | null>(null);
   const [propertyLoading, setPropertyLoading] = useState(true);
-  const [property, setProperty] = useState<PropertyData | null>(null);
   const [formData, setFormData] = useState<PropertyFormData | null>(null);
 
-  // Fetch property data
   useEffect(() => {
     if (!id) return;
 
-    const fetchProperty = async () => {
+    let cancelled = false;
+    (async () => {
       try {
         setPropertyLoading(true);
-        const propertyData = await api.properties.getById(Number(id)) as PropertyData;
-        setProperty(propertyData);
-        setFormData(mapPropertyDataToFormData(propertyData));
-        
-        // Check if user is authorized to edit this property
-        if (user && propertyData.user_id !== user.id && user.role !== 'ADMIN') {
+        const property = (await propertyService.getPropertyById(
+          Number(id)
+        )) as PropertyFromAPI;
+        if (cancelled) return;
+
+        const ownerId = (property as any).user_id;
+        if (user && ownerId !== user.id && user.role !== 'ADMIN') {
           setError('You are not authorized to edit this property');
-          setTimeout(() => {
-            router.push('/profile/properties');
-          }, 3000);
+          setTimeout(() => router.push('/profile/properties'), 3000);
+          return;
         }
+        setFormData(propertyService.transformPropertyToFormData(property));
       } catch (err) {
         console.error('Error fetching property:', err);
-        setError('Failed to load property data');
+        if (!cancelled) setError('Failed to load property data');
       } finally {
-        setPropertyLoading(false);
+        if (!cancelled) setPropertyLoading(false);
       }
+    })();
+
+    return () => {
+      cancelled = true;
     };
-
-    fetchProperty();
   }, [id, router, user]);
-
-  // Redirect to login if user is not authenticated
-  useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      router.push('/login');
-    }
-  }, [isAuthenticated, isLoading, router]);
 
   if (isLoading || propertyLoading) {
     return (
@@ -139,9 +58,7 @@ const EditPropertyPage: NextPage = () => {
     );
   }
 
-  if (!isAuthenticated) {
-    return null; // Don't render anything while redirecting
-  }
+  if (!isAuthenticated) return null;
 
   if (error) {
     return (
@@ -153,7 +70,7 @@ const EditPropertyPage: NextPage = () => {
     );
   }
 
-  if (!property || !formData) {
+  if (!formData) {
     return (
       <Layout>
         <div className="container mx-auto px-4 py-8">
@@ -167,13 +84,10 @@ const EditPropertyPage: NextPage = () => {
     <Layout>
       <div className="container mx-auto px-4 py-8">
         <h1 className="text-3xl font-semibold mb-6">Edit Property</h1>
-        <PropertyForm 
-          propertyId={Number(id)} 
-          initialData={formData}
-        />
+        <PropertyForm propertyId={Number(id)} initialData={formData} />
       </div>
     </Layout>
   );
 };
 
-export default EditPropertyPage; 
+export default EditPropertyPage;

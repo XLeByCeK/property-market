@@ -1,8 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
-import { Conversation, getConversations, Message, sendMessage, getMessages } from '../../../services/chatService';
-import { ConversationsList } from './';
-import { MessageView } from './';
+import {
+  Conversation,
+  Message,
+  getConversations,
+  getMessages,
+  sendMessage,
+} from '../../../services/chatService';
+import { ConversationsList, MessageView } from './';
 import { useAuth } from '../../../context/AuthContext';
 
 interface UserForConversation {
@@ -13,110 +18,66 @@ interface UserForConversation {
   lastName?: string;
 }
 
+/**
+ * Сравниваем разговоры так, как делает сервер: по собеседнику и опционально
+ * по объявлению. Раньше эта логика дублировалась в трёх местах внутри
+ * `ChatComponent` (и поэтому регулярно расходилась с действительностью).
+ */
+const sameConversation = (a: Conversation, b: Conversation) =>
+  a.user.id === b.user.id &&
+  (a.property?.id === b.property?.id || (!a.property && !b.property));
+
 const ChatComponent: React.FC = () => {
-  const [conversations, setConversations] = useState<Conversation[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
-  const [directConversationLoading, setDirectConversationLoading] = useState(false);
   const { user } = useAuth();
   const router = useRouter();
   const { userId, propertyId } = router.query;
 
-  useEffect(() => {
-    const fetchConversations = async () => {
-      try {
-        setLoading(true);
-        console.log('Fetching conversations...');
-        const data = await getConversations();
-        console.log('Conversations loaded:', data);
-        
-        // Filter out self-conversations where user.id matches current user id
-        const filtered = data.filter(conv => conv.user.id !== user?.id);
-        console.log('After filtering out self-conversations:', filtered);
-        
-        setConversations(filtered);
-        
-        // Check if we need to auto-select a conversation from URL params
-        if (userId) {
-          const targetUserId = Number(userId);
-          
-          // Try to find an existing conversation with this user
-          const existingConv = filtered.find(conv => 
-            conv.user.id === targetUserId && 
-            (!propertyId || conv.property?.id === Number(propertyId))
-          );
-          
-          if (existingConv) {
-            // We found an existing conversation, select it
-            setSelectedConversation(existingConv);
-          } else if (propertyId) {
-            // We need to create a new conversation
-            await handleDirectConversation(targetUserId, Number(propertyId));
-          }
-        }
-        
-        setLoading(false);
-      } catch (err: any) {
-        console.error('Failed to load conversations:', err);
-        setError(err.message || 'Не удалось загрузить чаты. Попробуйте позже.');
-        setLoading(false);
-      }
-    };
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [directConversationLoading, setDirectConversationLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-    if (user) {
-      fetchConversations();
-    } else {
-      setLoading(false);
-    }
-  }, [user, userId, propertyId]);
-
-  // Handle direct conversation creation for URL params
-  const handleDirectConversation = async (targetUserId: number, propertyId: number) => {
+  const handleDirectConversation = async (targetUserId: number, targetPropertyId: number) => {
     if (user?.id === targetUserId) {
       setError('Невозможно начать чат с самим собой');
       return;
     }
-    
+
     try {
       setDirectConversationLoading(true);
-      
-      // First check if we can get messages (conversation exists but wasn't in the list)
+
       let messages: Message[] = [];
       try {
-        messages = await getMessages(targetUserId, propertyId);
-      } catch (err) {
-        console.log('No existing messages found, will create a new conversation');
+        messages = await getMessages(targetUserId, targetPropertyId);
+      } catch {
+        // Существующий диалог найти не удалось — ничего страшного, создадим новый.
       }
-      
-      // If no existing messages, create the conversation with an initial message
+
       if (messages.length === 0) {
         await sendMessage(
           targetUserId,
-          `Здравствуйте! Меня интересует ваше объявление с ID ${propertyId}`,
-          propertyId
+          `Здравствуйте! Меня интересует ваше объявление с ID ${targetPropertyId}`,
+          targetPropertyId
         );
-        
-        // Fetch messages again to get the newly created conversation
-        messages = await getMessages(targetUserId, propertyId);
+        messages = await getMessages(targetUserId, targetPropertyId);
       }
-      
-      if (messages.length > 0) {
-        // Create a new conversation object
-        const message = messages[0];
-        const otherUser = message.sender_id === user?.id ? message.recipient : message.sender;
-        
-        const newConversation: Conversation = {
-          user: otherUser as UserForConversation,
-          property: message.property,
-          lastMessage: message,
-          unreadCount: 0
-        };
-        
-        // Add this conversation to the list
-        setConversations(prev => [newConversation, ...prev]);
-        setSelectedConversation(newConversation);
-      }
+
+      if (messages.length === 0) return;
+
+      const firstMessage = messages[0];
+      const otherUser =
+        firstMessage.sender_id === user?.id ? firstMessage.recipient : firstMessage.sender;
+
+      const newConversation: Conversation = {
+        user: otherUser as UserForConversation,
+        property: firstMessage.property,
+        lastMessage: firstMessage,
+        unreadCount: 0,
+      };
+
+      setConversations((prev) => [newConversation, ...prev]);
+      setSelectedConversation(newConversation);
     } catch (err) {
       console.error('Failed to create direct conversation:', err);
       setError('Не удалось создать чат. Пожалуйста, попробуйте позже.');
@@ -125,32 +86,65 @@ const ChatComponent: React.FC = () => {
     }
   };
 
+  useEffect(() => {
+    if (!user) {
+      setLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+    (async () => {
+      try {
+        setLoading(true);
+        const data = await getConversations();
+        const filtered = data.filter((conv) => conv.user.id !== user.id);
+        if (cancelled) return;
+        setConversations(filtered);
+
+        if (userId) {
+          const targetUserId = Number(userId);
+          const existing = filtered.find(
+            (conv) =>
+              conv.user.id === targetUserId &&
+              (!propertyId || conv.property?.id === Number(propertyId))
+          );
+
+          if (existing) {
+            setSelectedConversation(existing);
+          } else if (propertyId) {
+            await handleDirectConversation(targetUserId, Number(propertyId));
+          }
+        }
+      } catch (err: any) {
+        if (!cancelled) {
+          console.error('Failed to load conversations:', err);
+          setError(err?.message || 'Не удалось загрузить чаты. Попробуйте позже.');
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, userId, propertyId]);
+
   const handleConversationSelect = (conversation: Conversation) => {
     setSelectedConversation(conversation);
-    
-    // Update the URL to reflect the selected conversation
-    const query: { userId: string; propertyId?: string } = { 
-      userId: conversation.user.id.toString() 
+    const query: { userId: string; propertyId?: string } = {
+      userId: conversation.user.id.toString(),
     };
-    
     if (conversation.property) {
       query.propertyId = conversation.property.id.toString();
     }
-    
-    router.push({
-      pathname: '/messages',
-      query
-    }, undefined, { shallow: true });
+    router.push({ pathname: '/messages', query }, undefined, { shallow: true });
   };
 
   const handleConversationUpdate = (updatedConversation: Conversation) => {
-    setConversations(prev => 
-      prev.map(conv => 
-        conv.user.id === updatedConversation.user.id && 
-        (conv.property?.id === updatedConversation.property?.id || 
-         (!conv.property && !updatedConversation.property))
-          ? updatedConversation : conv
-      )
+    setConversations((prev) =>
+      prev.map((conv) => (sameConversation(conv, updatedConversation) ? updatedConversation : conv))
     );
   };
 
@@ -172,7 +166,7 @@ const ChatComponent: React.FC = () => {
           ) : conversations.length === 0 ? (
             <p className="text-muted">У вас пока нет сообщений</p>
           ) : (
-            <ConversationsList 
+            <ConversationsList
               conversations={conversations}
               onSelectConversation={handleConversationSelect}
               selectedConversation={selectedConversation}
@@ -182,7 +176,7 @@ const ChatComponent: React.FC = () => {
       </div>
       <div className="col-md-8">
         {selectedConversation ? (
-          <MessageView 
+          <MessageView
             conversation={selectedConversation}
             onConversationUpdate={handleConversationUpdate}
           />
@@ -204,4 +198,4 @@ const ChatComponent: React.FC = () => {
   );
 };
 
-export default ChatComponent; 
+export default ChatComponent;

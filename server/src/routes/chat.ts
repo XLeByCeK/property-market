@@ -1,300 +1,159 @@
 import express from 'express';
 import prisma from '../config/prisma';
 import { authenticateToken } from '../middleware/auth';
+import { requireUser } from '../middleware/require-user';
+import { asyncHandler } from '../utils/async-handler';
+import { badRequest, notFound } from '../utils/http-errors';
+import { parseIdParam, toOptionalInt } from '../utils/parse-id';
 
 const router = express.Router();
 
-type CreateMessageRequest = {
+interface CreateMessageRequest {
   content: string;
   property_id?: number;
   recipient_id: number;
-};
+}
 
-// Get all conversations for a user
-router.get('/conversations', authenticateToken, async (req, res) => {
-  try {
-    if (!req.user) {
-      return res.status(401).json({ error: 'Unauthorized' });
-    }
+const userMini = {
+  select: { id: true, first_name: true, last_name: true },
+} as const;
 
-    console.log(`Fetching conversations for user: ${req.user.id}`);
+const propertyMini = {
+  select: { id: true, title: true, price: true },
+} as const;
 
-    // Get all unique conversations from user messages
-    const conversations = await prisma.user_message.findMany({
-      where: {
-        OR: [
-          { sender_id: req.user.id },
-          { recipient_id: req.user.id }
-        ],
-        // Filter out self-messages
-        NOT: {
-          AND: [
-            { sender_id: req.user.id },
-            { recipient_id: req.user.id }
-          ]
-        }
-      },
-      include: {
-        property: {
-          select: {
-            id: true,
-            title: true,
-            price: true,
-            images: {
-              where: { is_main: true },
-              take: 1
-            }
-          }
-        },
-        sender: {
-          select: {
-            id: true,
-            first_name: true,
-            last_name: true
-          }
-        },
-        recipient: {
-          select: {
-            id: true,
-            first_name: true,
-            last_name: true
-          }
-        }
-      },
-      orderBy: {
-        created_at: 'desc'
-      }
-    });
+const messageInclude = {
+  sender: userMini,
+  recipient: userMini,
+  property: propertyMini,
+} as const;
 
-    // Group by property_id and get latest message for each
-    const groupedByProperty = conversations.reduce((acc, message) => {
-      const propertyId = message.property_id || 'direct';
-      const key = `${propertyId}`;
-      
-      if (!acc[key] || new Date(message.created_at) > new Date(acc[key].created_at)) {
-        acc[key] = message;
-      }
-      return acc;
-    }, {} as Record<string, any>);
+const conversationsInclude = {
+  sender: userMini,
+  recipient: userMini,
+  property: {
+    select: {
+      id: true,
+      title: true,
+      price: true,
+      images: { where: { is_main: true }, take: 1 },
+    },
+  },
+} as const;
 
-    const conversationsList = Object.values(groupedByProperty);
-
-    console.log(`Found ${conversationsList.length} conversations`);
-    res.json(conversationsList);
-  } catch (error) {
-    console.error('Error fetching conversations:', error);
-    res.status(500).json({ error: 'Failed to fetch conversations' });
-  }
-});
-
-// Get messages for a property
-router.get('/properties/:propertyId/messages', authenticateToken, async (req, res) => {
-  try {
-    if (!req.user) {
-      return res.status(401).json({ error: 'Unauthorized' });
-    }
-
-    const propertyId = parseInt(req.params.propertyId);
-    if (isNaN(propertyId)) {
-      return res.status(400).json({ error: 'Invalid property ID' });
-    }
-
-    // Получаем userId из запроса (если указан) или используем идентификатор текущего пользователя
-    const otherUserId = req.query.userId ? parseInt(req.query.userId as string) : null;
-    
-    console.log(`Fetching messages for property: ${propertyId}, user: ${req.user.id}, otherUser: ${otherUserId || 'all'}`);
-
-    // Check if property exists
-    const property = await prisma.property.findUnique({
-      where: { id: propertyId },
-    });
-
-    if (!property) {
-      return res.status(404).json({ error: 'Property not found' });
-    }
-
-    // Если указан конкретный пользователь, ищем сообщения только для этого разговора
-    let messagesWhere: any = {
-      property_id: propertyId,
-      // Filter out self-messages
-      NOT: {
-        AND: [
-          { sender_id: req.user.id },
-          { recipient_id: req.user.id }
-        ]
-      }
-    };
-    
-    if (otherUserId) {
-      messagesWhere.OR = [
-        // Сообщения от текущего пользователя другому пользователю
-        {
-          sender_id: req.user.id,
-          recipient_id: otherUserId
-        },
-        // Сообщения от другого пользователя текущему пользователю
-        {
-          sender_id: otherUserId,
-          recipient_id: req.user.id
-        }
-      ];
-    } else {
-      // Если пользователь не указан, ищем все сообщения пользователя по этому объекту
-      messagesWhere.OR = [
-        { sender_id: req.user.id },
-        { recipient_id: req.user.id }
-      ];
-    }
+router.get(
+  '/conversations',
+  authenticateToken,
+  asyncHandler(async (req, res) => {
+    const user = requireUser(req);
 
     const messages = await prisma.user_message.findMany({
-      where: messagesWhere,
-      include: {
-        sender: {
-          select: {
-            id: true,
-            first_name: true,
-            last_name: true,
-          },
-        },
-        recipient: {
-          select: {
-            id: true,
-            first_name: true,
-            last_name: true,
-          },
-        },
-        property: {
-          select: {
-            id: true,
-            title: true,
-            price: true
-          }
-        }
+      where: {
+        OR: [{ sender_id: user.id }, { recipient_id: user.id }],
+        NOT: { AND: [{ sender_id: user.id }, { recipient_id: user.id }] },
       },
-      orderBy: {
-        created_at: 'asc',
-      },
+      include: conversationsInclude,
+      orderBy: { created_at: 'desc' },
     });
 
-    console.log(`Found ${messages.length} messages for property: ${propertyId}`);
-    res.json(messages);
-  } catch (error) {
-    console.error('Error fetching messages:', error);
-    res.status(500).json({ error: 'Failed to fetch messages' });
-  }
-});
-
-// Send a message
-router.post('/messages', authenticateToken, async (req: express.Request<{}, {}, CreateMessageRequest>, res) => {
-  try {
-    if (!req.user) {
-      return res.status(401).json({ error: 'Unauthorized' });
+    // Группируем по property_id и оставляем только последнее сообщение в каждой переписке.
+    const latestByProperty = new Map<string, (typeof messages)[number]>();
+    for (const message of messages) {
+      const key = `${message.property_id ?? 'direct'}`;
+      const existing = latestByProperty.get(key);
+      if (!existing || message.created_at > existing.created_at) {
+        latestByProperty.set(key, message);
+      }
     }
 
+    res.json(Array.from(latestByProperty.values()));
+  })
+);
+
+router.get(
+  '/properties/:propertyId/messages',
+  authenticateToken,
+  asyncHandler(async (req, res) => {
+    const user = requireUser(req);
+    const propertyId = parseIdParam(req.params.propertyId, 'property ID');
+    const otherUserId = toOptionalInt(req.query.userId);
+
+    const propertyExists = await prisma.property.count({ where: { id: propertyId } });
+    if (!propertyExists) throw notFound('Property not found');
+
+    const where = otherUserId
+      ? {
+          property_id: propertyId,
+          OR: [
+            { sender_id: user.id, recipient_id: otherUserId },
+            { sender_id: otherUserId, recipient_id: user.id },
+          ],
+        }
+      : {
+          property_id: propertyId,
+          NOT: { AND: [{ sender_id: user.id }, { recipient_id: user.id }] },
+          OR: [{ sender_id: user.id }, { recipient_id: user.id }],
+        };
+
+    const messages = await prisma.user_message.findMany({
+      where,
+      include: messageInclude,
+      orderBy: { created_at: 'asc' },
+    });
+
+    res.json(messages);
+  })
+);
+
+router.post(
+  '/messages',
+  authenticateToken,
+  asyncHandler(async (req: express.Request<{}, {}, CreateMessageRequest>, res) => {
+    const user = requireUser(req);
     const { content, property_id, recipient_id } = req.body;
 
     if (!content || !recipient_id) {
-      return res.status(400).json({ error: 'Message content and recipient ID are required' });
+      throw badRequest('Message content and recipient ID are required');
     }
-    
-    // Prevent sending messages to oneself
-    if (recipient_id === req.user.id) {
-      return res.status(400).json({ error: 'Cannot send a message to yourself' });
+    if (recipient_id === user.id) {
+      throw badRequest('Cannot send a message to yourself');
     }
 
-    console.log(`Sending message from ${req.user.id} to ${recipient_id} about property: ${property_id || 'direct'}`);
+    const recipient = await prisma.users.findUnique({ where: { id: recipient_id } });
+    if (!recipient) throw notFound('Recipient not found');
 
-    // Check if recipient exists
-    const recipient = await prisma.users.findUnique({
-      where: { id: recipient_id },
-    });
-
-    if (!recipient) {
-      return res.status(404).json({ error: 'Recipient not found' });
-    }
-
-    // If property_id is provided, check if property exists
     if (property_id) {
-      const property = await prisma.property.findUnique({
-        where: { id: property_id },
-      });
-
-      if (!property) {
-        return res.status(404).json({ error: 'Property not found' });
-      }
+      const property = await prisma.property.findUnique({ where: { id: property_id } });
+      if (!property) throw notFound('Property not found');
     }
 
     const message = await prisma.user_message.create({
-      data: {
-        message: content,
-        sender_id: req.user.id,
-        recipient_id,
-        property_id,
-      },
-      include: {
-        sender: {
-          select: {
-            id: true,
-            first_name: true,
-            last_name: true,
-          },
-        },
-        recipient: {
-          select: {
-            id: true,
-            first_name: true,
-            last_name: true,
-          },
-        },
-        property: {
-          select: {
-            id: true,
-            title: true,
-            price: true
-          }
-        }
-      },
+      data: { message: content, sender_id: user.id, recipient_id, property_id },
+      include: messageInclude,
     });
 
-    console.log(`Message sent successfully, id: ${message.id}`);
     res.json(message);
-  } catch (error) {
-    console.error('Error sending message:', error);
-    res.status(500).json({ error: 'Failed to send message' });
-  }
-});
+  })
+);
 
-// Mark messages as read endpoint (placeholder)
-router.post('/messages/read', authenticateToken, async (req, res) => {
-  try {
-    if (!req.user) {
-      return res.status(401).json({ error: 'Unauthorized' });
-    }
-
-    const { messageIds } = req.body;
+router.post(
+  '/messages/read',
+  authenticateToken,
+  asyncHandler(async (req, res) => {
+    const user = requireUser(req);
+    const { messageIds } = req.body as { messageIds?: number[] };
 
     if (!messageIds || !Array.isArray(messageIds) || messageIds.length === 0) {
-      return res.status(400).json({ error: 'Message IDs are required' });
+      throw badRequest('Message IDs are required');
     }
 
-    console.log(`Marking messages as read: ${messageIds.join(', ')}`);
-
-    // Update messages to mark them as read
     await prisma.user_message.updateMany({
-      where: {
-        id: { in: messageIds },
-        recipient_id: req.user.id // Only mark as read if user is the recipient
-      },
-      data: {
-        is_read: true
-      }
+      where: { id: { in: messageIds }, recipient_id: user.id },
+      data: { is_read: true },
     });
 
     res.json({ success: true });
-  } catch (error) {
-    console.error('Error marking messages as read:', error);
-    res.status(500).json({ error: 'Failed to mark messages as read' });
-  }
-});
+  })
+);
 
-export default router; 
+export default router;
