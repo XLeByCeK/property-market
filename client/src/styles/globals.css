@@ -2066,3 +2066,74 @@ a.menu-item:hover {
 .ai-property-link:hover {
   opacity: 0.85;
 }
+
+.ai-section-title {
+  margin-top: 16px;
+  margin-bottom: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #555;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.ai-properties-best {
+  margin-bottom: 8px;
+}
+
+.ai-property-card-best {
+  border: 2px solid #f5b400;
+  box-shadow: 0 6px 20px rgba(245, 180, 0, 0.25);
+  position: relative;
+  background: linear-gradient(180deg, #fff8e1 0%, #ffffff 60%);
+}
+
+.ai-best-banner {
+  background: linear-gradient(90deg, #f5b400, #ff8800);
+  color: #fff;
+  font-weight: 600;
+  font-size: 13px;
+  text-align: center;
+  padding: 6px 10px;
+  border-radius: 8px;
+  margin-bottom: 8px;
+}
+
+.ai-property-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.ai-property-price {
+  font-size: 16px;
+  font-weight: 600;
+  color: #111;
+}
+
+.ai-property-effective {
+  font-size: 13px;
+  color: #666;
+  margin-top: 2px;
+}
+
+.ai-renovation-badge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 999px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.ai-renovation-yes {
+  background: #d1f7d1;
+  color: #1a7a1a;
+}
+
+.ai-renovation-no {
+  background: #ffe2cc;
+  color: #a04500;
+}

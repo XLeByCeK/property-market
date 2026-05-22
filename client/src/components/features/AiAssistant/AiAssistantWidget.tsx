@@ -3,7 +3,7 @@
 import Link from 'next/link';
 
 import { useState } from 'react';
-import { useAiAssistant } from '../../../context/AiAssistantContext';
+import { AiProperty, useAiAssistant } from '../../../context/AiAssistantContext';
 import { aiSearch } from '../../../services/ai.service';
 import { getImageUrl } from '../../../utils/imageUrl';
 
@@ -12,104 +12,143 @@ type Message = {
   text: string;
 };
 
-// 👉 тип недвижимости (подстрой под свой backend при необходимости)
-type Property = {
-  id: number; // В консоли у вас число (2), а не string
-  title: string;
-  price: number;
-  city_id: number; // Соответствует вашему объекту из консоли
-  image?: string;  // Это поле мы добавили в маппинге выше
-};
+const formatPrice = (value: number) =>
+  Math.round(value).toLocaleString('ru-RU');
 
-// 👉 карточка недвижимости
-const PropertyCard = ({ p }: { p: Property }) => (
-  <div className="ai-property-card">
-    <div className="ai-property-image-container" style={{ height: '200px', overflow: 'hidden' }}>
-      {p.image ? (
-        <img
-          src={getImageUrl(p.image)}
-          alt={p.title}
-          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-        />
-      ) : (
-        <div className="ai-no-image">Нет фото</div>
-      )}
-    </div>
-
-    <div className="ai-property-info">
-      <strong>{p.title}</strong>{/* Или p.city.name, если сделаете include city */}
-      <div>{p.price.toLocaleString()} ₽</div>
-
-      <Link href={`/property/${p.id}`} className="ai-property-link">
-        Перейти →
-      </Link>
-    </div>
-  </div>
+const RenovationBadge = ({ hasRenovation }: { hasRenovation?: boolean }) => (
+  <span
+    className={`ai-renovation-badge ${
+      hasRenovation ? 'ai-renovation-yes' : 'ai-renovation-no'
+    }`}
+  >
+    {hasRenovation ? 'С отделкой' : 'Без отделки'}
+  </span>
 );
 
-export const AiAssistantWidget = () => {
+const PropertyCard = ({
+  p,
+  highlight = false,
+}: {
+  p: AiProperty;
+  highlight?: boolean;
+}) => {
+  const hasRenovation = Boolean(p.has_renovation);
+  const showEffective =
+    typeof p.effective_price === 'number' && !hasRenovation && p.effective_price > p.price;
 
-  
-  // ⬇️ ВАЖНО: теперь берём properties
-  const { isOpen, close, setProperties, properties } = useAiAssistant();
+  return (
+    <div className={`ai-property-card ${highlight ? 'ai-property-card-best' : ''}`}>
+      {highlight && (
+        <div className="ai-best-banner">⭐ Лучший вариант по цене</div>
+      )}
+
+      <div
+        className="ai-property-image-container"
+        style={{ height: '200px', overflow: 'hidden' }}
+      >
+        {p.image ? (
+          <img
+            src={getImageUrl(p.image)}
+            alt={p.title}
+            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+          />
+        ) : (
+          <div className="ai-no-image">Нет фото</div>
+        )}
+      </div>
+
+      <div className="ai-property-info">
+        <div className="ai-property-header">
+          <strong>{p.title}</strong>
+          <RenovationBadge hasRenovation={hasRenovation} />
+        </div>
+
+        <div className="ai-property-price">{formatPrice(p.price)} ₽</div>
+
+        {showEffective && (
+          <div className="ai-property-effective">
+            ≈ {formatPrice(p.effective_price as number)} ₽ с учётом ремонта (+30%)
+          </div>
+        )}
+
+        <Link href={`/property/${p.id}`} className="ai-property-link">
+          Перейти →
+        </Link>
+      </div>
+    </div>
+  );
+};
+
+export const AiAssistantWidget = () => {
+  const {
+    isOpen,
+    close,
+    properties,
+    setProperties,
+    recommended,
+    setRecommended,
+    reasoning,
+    setReasoning,
+  } = useAiAssistant();
 
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState<Message[]>([
     {
       role: 'bot',
-      text: '👋 Опишите, какую недвижимость вы ищете',
+      text: '👋 Опишите, какую недвижимость вы ищете — я подберу подходящие варианты и предложу самый выгодный.',
     },
   ]);
   const [loading, setLoading] = useState(false);
 
   const handleSend = async () => {
-    
     if (!input.trim() || loading) return;
 
     const userMessage = input;
     setInput('');
     setLoading(true);
 
-    
-    setMessages(prev => [
-      ...prev,
-      { role: 'user', text: userMessage },
-    ]);
+    setMessages(prev => [...prev, { role: 'user', text: userMessage }]);
 
     try {
       const data = await aiSearch(userMessage);
 
-      console.log('Данные от AI:', data.properties);
+      console.log('Данные от AI:', data);
 
-      // сохраняем объекты
-      setProperties(data.properties);
+      setProperties(data.properties || []);
+      setRecommended(data.recommended ?? null);
+      setReasoning(data.reasoning ?? '');
 
-      
+      const count = data.properties?.length ?? 0;
+      const botText =
+        count === 0
+          ? 'К сожалению, подходящих объектов не найдено 😔 Попробуйте уточнить запрос.'
+          : data.recommended
+          ? `Я нашёл ${count} подходящих ${
+              count === 1 ? 'вариант' : 'варианта/ов'
+            }. Лучшее предложение я выделил отдельно 👇`
+          : `Я нашёл ${count} подходящих вариантов 👇`;
 
-      setMessages(prev => [
-        ...prev,
-        {
-          role: 'bot',
-          text:
-            data.properties.length > 0
-              ? `Я нашёл ${data.properties.length} подходящих вариантов 👇`
-              : 'К сожалению, подходящих объектов не найдено 😔',
-        },
-      ]);
+      setMessages(prev => [...prev, { role: 'bot', text: botText }]);
+
+      if (data.reasoning) {
+        setMessages(prev => [...prev, { role: 'bot', text: data.reasoning }]);
+      }
     } catch (e) {
       console.error('AI SEARCH ERROR:', e);
 
       setMessages(prev => [
         ...prev,
-        {
-          role: 'bot',
-          text: 'Произошла ошибка. Попробуйте ещё раз 🙏',
-        },
+        { role: 'bot', text: 'Произошла ошибка. Попробуйте ещё раз 🙏' },
       ]);
     } finally {
       setLoading(false);
     }
   };
+
+  // Чтобы не дублировать рекомендованный объект в общем списке.
+  const otherProperties = recommended
+    ? properties.filter(p => p.id !== recommended.id)
+    : properties;
 
   return (
     <>
@@ -123,7 +162,6 @@ export const AiAssistantWidget = () => {
           </button>
         </div>
 
-        {/* Чат */}
         <div className="ai-content">
           {messages.map((m, i) => (
             <div
@@ -134,33 +172,36 @@ export const AiAssistantWidget = () => {
             </div>
           ))}
 
-          {/* 👉 КАРТОЧКИ НЕДВИЖИМОСТИ */}
-          {properties.length > 0 && (
-            <div className="ai-properties">
-              {properties.map(p => (
-                <PropertyCard key={p.id} p={p} />
-              ))}
+          {recommended && (
+            <div className="ai-properties ai-properties-best">
+              <PropertyCard p={recommended} highlight />
             </div>
           )}
 
-          {loading && (
-            <div className="ai-message ai-bot">⏳ Думаю…</div>
+          {otherProperties.length > 0 && (
+            <>
+              {recommended && (
+                <div className="ai-section-title">Другие подходящие варианты</div>
+              )}
+              <div className="ai-properties">
+                {otherProperties.map(p => (
+                  <PropertyCard key={p.id} p={p} />
+                ))}
+              </div>
+            </>
           )}
+
+          {loading && <div className="ai-message ai-bot">⏳ Думаю…</div>}
         </div>
 
-        {/* Input */}
         <div className="ai-input">
           <input
             value={input}
             onChange={e => setInput(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && handleSend()}
-            placeholder="Например: 2-комнатная в центре…"
+            placeholder="Например: 2-комнатная в центре или «подбери самое выгодное»"
           />
-          <button
-            className="ai-send"
-            onClick={handleSend}
-            aria-label="Отправить"
-          >
+          <button className="ai-send" onClick={handleSend} aria-label="Отправить">
             <svg
               width="18"
               height="18"

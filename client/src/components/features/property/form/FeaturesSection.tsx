@@ -12,6 +12,7 @@ const FEATURES: Array<{ name: keyof PropertyFormData; label: string }> = [
   { name: 'is_new_building', label: 'New Building' },
   { name: 'is_commercial', label: 'Commercial Property' },
   { name: 'is_country', label: 'Country/Suburban Property' },
+  { name: 'has_renovation', label: 'Has Renovation / С отделкой' },
 ];
 
 export const FeaturesSection: React.FC<FeaturesSectionProps> = ({ formData, onChange }) => (

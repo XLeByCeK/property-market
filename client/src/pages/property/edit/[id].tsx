@@ -8,7 +8,7 @@ import { PropertyFormData, PropertyFromAPI } from '../../../types/property';
 import * as propertyService from '../../../services/propertyService';
 
 const EditPropertyPage: NextPage = () => {
-  const { isAuthenticated, isLoading, user } = useRequireAuth('/login');
+  const { isAuthenticated, isLoading, user } = useRequireAuth('/');
   const router = useRouter();
   const { id } = router.query;
 

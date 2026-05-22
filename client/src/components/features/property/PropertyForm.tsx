@@ -28,6 +28,7 @@ const EMPTY_FORM: PropertyFormData = {
   is_new_building: false,
   is_commercial: false,
   is_country: false,
+  has_renovation: false,
   images: [],
 };
 

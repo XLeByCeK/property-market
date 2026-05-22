@@ -72,7 +72,7 @@ export async function searchProperties(aiFilters: any) {
     };
   }
 
-  // 8. Булевы параметры (Новостройка, Коммерция, Загородная)
+  // 8. Булевы параметры (Новостройка, Коммерция, Загородная, Ремонт)
   if (typeof aiFilters.isNewBuilding === 'boolean') {
     where.is_new_building = aiFilters.isNewBuilding;
   }
@@ -81,6 +81,12 @@ export async function searchProperties(aiFilters: any) {
   }
   if (typeof aiFilters.isCountry === 'boolean') {
     where.is_country = aiFilters.isCountry;
+  }
+  // Фильтр по отделке применяем ТОЛЬКО если пользователь явно её упомянул.
+  // В остальных случаях (null) возвращаем и с ремонтом, и без — чтобы ассистент
+  // сам сравнил варианты и выбрал самый выгодный.
+  if (typeof aiFilters.hasRenovation === 'boolean') {
+    where.has_renovation = aiFilters.hasRenovation;
   }
 
   // 9. Метро (расстояние)

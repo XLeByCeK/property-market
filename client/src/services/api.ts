@@ -46,25 +46,21 @@ apiClient.interceptors.response.use(
       });
     }
     
-    // Handle 401 Unauthorized errors (expired or invalid token)
+    // Handle 401 Unauthorized errors (expired or invalid token).
+    // В этом проекте нет отдельной страницы /login — авторизация открывается
+    // через модалку из шапки. Поэтому просто чистим токен и продолжаем работу:
+    // AuthContext сам подхватит неавторизованное состояние, а пользователь
+    // сможет войти заново через модалку.
     if (response.status === 401 && typeof window !== 'undefined') {
       console.warn('Authentication Error - Token expired or invalid');
-      
-      // Only clear tokens if they exist to avoid unnecessary operations
+
       if (localStorage.getItem('token')) {
         console.log('Clearing invalid auth tokens');
         localStorage.removeItem('token');
         localStorage.removeItem('user');
-        
-        // Don't redirect if already on login page or if the URL contains 'auth' to avoid redirect loops
-        const currentPath = window.location.pathname;
-        if (!currentPath.includes('/login') && !currentPath.includes('/auth')) {
-          // Add a small delay to allow for any current processes to complete
-          setTimeout(() => {
-            const returnUrl = encodeURIComponent(currentPath);
-            window.location.href = `/login?returnUrl=${returnUrl}`;
-          }, 100);
-        }
+        // Сообщаем приложению о смене состояния авторизации, чтобы
+        // компоненты, слушающие storage, могли обновить UI.
+        window.dispatchEvent(new Event('auth:logout'));
       }
     }
     

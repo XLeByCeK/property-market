@@ -105,6 +105,7 @@ const PropertyPage = () => {
       is_new_building: true,
       is_commercial: false,
       is_country: false,
+      has_renovation: true,
       user: {
         id: 1,
         first_name: 'Иван',

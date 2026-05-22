@@ -97,6 +97,7 @@ export const transformPropertyToFormData = (property: PropertyFromAPI): Property
   is_new_building: property.is_new_building,
   is_commercial: property.is_commercial,
   is_country: property.is_country,
+  has_renovation: Boolean(property.has_renovation),
   images: property.images.map((img) => img.image_url),
 });
 

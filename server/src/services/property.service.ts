@@ -183,6 +183,7 @@ export interface CreatePropertyInput {
   is_new_building?: boolean;
   is_commercial?: boolean;
   is_country?: boolean;
+  has_renovation?: boolean;
   images: string[];
 }
 
@@ -217,6 +218,7 @@ export const createProperty = async (userId: number, input: CreatePropertyInput)
       is_new_building: input.is_new_building ?? false,
       is_commercial: input.is_commercial ?? false,
       is_country: input.is_country ?? false,
+      has_renovation: input.has_renovation ?? false,
       user_id: userId,
       images: {
         create: input.images.map((url, index) => ({
@@ -249,6 +251,7 @@ const buildUpdateData = (input: UpdatePropertyInput): Prisma.propertyUpdateInput
   if (input.is_new_building !== undefined) data.is_new_building = input.is_new_building;
   if (input.is_commercial !== undefined) data.is_commercial = input.is_commercial;
   if (input.is_country !== undefined) data.is_country = input.is_country;
+  if (input.has_renovation !== undefined) data.has_renovation = input.has_renovation;
 
   const price = toFloat(input.price);
   const area = toFloat(input.area);

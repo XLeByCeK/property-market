@@ -64,6 +64,7 @@ export interface PropertyFromAPI {
   is_new_building: boolean;
   is_commercial: boolean;
   is_country: boolean;
+  has_renovation: boolean;
   created_at: string;
   updated_at: string;
   property_type_id: number;
@@ -97,6 +98,7 @@ export interface PropertyDetails {
   is_new_building: boolean;
   is_commercial: boolean;
   is_country: boolean;
+  has_renovation: boolean;
   created_at: string;
   updated_at: string;
   property_type: PropertyType;
@@ -146,5 +148,6 @@ export interface PropertyFormData {
   is_new_building: boolean;
   is_commercial: boolean;
   is_country: boolean;
+  has_renovation: boolean;
   images: string[];
 }
