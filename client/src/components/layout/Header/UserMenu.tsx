@@ -49,7 +49,7 @@ export const UserMenu = () => {
 
   const handleMessagesClick = () => {
     closeUserMenu();
-    router.push('/messages');
+    router.push('/profile/messages');
   };
 
   const handleLogoutClick = async () => {

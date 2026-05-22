@@ -72,7 +72,7 @@ export const PropertyContactCard: React.FC<PropertyContactCardProps> = ({ proper
     } finally {
       setIsSending(false);
       // Переходим к чату даже при ошибке: страница сама покажет состояние.
-      router.push(`/messages?userId=${property.user.id}&propertyId=${property.id}`);
+      router.push(`/profile/messages?userId=${property.user.id}&propertyId=${property.id}`);
     }
   };
 

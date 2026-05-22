@@ -1,16 +1,27 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { NextPage } from 'next';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
 import { Layout } from '../../components/layout/Layout';
 import PropertyForm from '../../components/features/property/PropertyForm';
-import { useRequireAuth } from '../../hooks/useRequireAuth';
+import { AuthModal } from '../../components/features/auth/AuthModal';
+import { useAuth } from '../../context/AuthContext';
 
 const CreatePropertyPage: NextPage = () => {
   const router = useRouter();
-  const { isAuthenticated, isLoading } = useRequireAuth('/login?returnUrl=/property/create');
+  const { isAuthenticated, isLoading } = useAuth();
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
-  // Если проверка авторизации еще выполняется, показываем индикатор загрузки
+  const openAuthModal = () => {
+    setIsAuthModalOpen(true);
+    document.body.style.overflow = 'hidden';
+  };
+
+  const closeAuthModal = () => {
+    setIsAuthModalOpen(false);
+    document.body.style.overflow = '';
+  };
+
   if (isLoading) {
     return (
       <Layout>
@@ -22,11 +33,6 @@ const CreatePropertyPage: NextPage = () => {
         </div>
       </Layout>
     );
-  }
-
-  // Если пользователь не авторизован, не показываем форму
-  if (!isAuthenticated) {
-    return null;
   }
 
   return (
@@ -62,11 +68,22 @@ const CreatePropertyPage: NextPage = () => {
           </button>
           <h1 className="category-title m-0">Разместить объявление</h1>
         </div>
-        
-        <div className="bg-white shadow-lg rounded-lg overflow-hidden p-6">
-          <PropertyForm />
-        </div>
+
+        {isAuthenticated ? (
+          <div className="bg-white shadow-lg rounded-lg overflow-hidden p-6">
+            <PropertyForm />
+          </div>
+        ) : (
+          <div className="alert alert-info">
+            <p>Чтобы разместить объявление, необходимо войти в аккаунт.</p>
+            <button className="btn btn-primary" onClick={openAuthModal}>
+              Войти
+            </button>
+          </div>
+        )}
       </div>
+
+      <AuthModal isOpen={isAuthModalOpen} onClose={closeAuthModal} />
     </Layout>
   );
 };

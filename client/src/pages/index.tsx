@@ -60,19 +60,19 @@ export default function Home() {
               <PropertyCategory 
                 title="Новостройки" 
                 properties={newBuildingsData}
-                link="/new-buildings"
+                link="/category/new-buildings"
               />
               
               <PropertyCategory 
                 title="Купить" 
                 properties={forSaleData}
-                link="/buy"
+                link="/category/buy"
               />
               
               <PropertyCategory 
                 title="Снять" 
                 properties={forRentData}
-                link="/rent"
+                link="/category/rent"
               />
             </>
           )}

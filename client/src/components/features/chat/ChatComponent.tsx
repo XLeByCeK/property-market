@@ -139,7 +139,7 @@ const ChatComponent: React.FC = () => {
     if (conversation.property) {
       query.propertyId = conversation.property.id.toString();
     }
-    router.push({ pathname: '/messages', query }, undefined, { shallow: true });
+    router.push({ pathname: '/profile/messages', query }, undefined, { shallow: true });
   };
 
   const handleConversationUpdate = (updatedConversation: Conversation) => {

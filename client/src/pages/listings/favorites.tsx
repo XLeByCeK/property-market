@@ -5,6 +5,7 @@ import { Layout } from '../../components/layout/Layout';
 import { PropertyCard } from '../../components/features/property/card/PropertyCard';
 import { Property, getFavoriteProperties } from '../../services/propertyService';
 import { useAuth } from '../../context/AuthContext';
+import { AuthModal } from '../../components/features/auth/AuthModal';
 import Link from 'next/link';
 
 const FavoritesPage: NextPage = () => {
@@ -13,6 +14,17 @@ const FavoritesPage: NextPage = () => {
   const [error, setError] = useState<string | null>(null);
   const { isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+
+  const openAuthModal = () => {
+    setIsAuthModalOpen(true);
+    document.body.style.overflow = 'hidden';
+  };
+
+  const closeAuthModal = () => {
+    setIsAuthModalOpen(false);
+    document.body.style.overflow = '';
+  };
 
   // Функция для обновления данных через сервис
   const refreshFavorites = async () => {
@@ -31,17 +43,12 @@ const FavoritesPage: NextPage = () => {
   };
 
   useEffect(() => {
-    // Редирект на страницу логина, если пользователь не авторизован
-    if (!isLoading && !isAuthenticated) {
-      router.push('/login?returnUrl=/favorites');
-      return;
-    }
-
-    // Загружаем избранное, когда пользователь авторизован
     if (isAuthenticated && !isLoading) {
       refreshFavorites();
+    } else if (!isLoading && !isAuthenticated) {
+      setLoading(false);
     }
-  }, [isAuthenticated, isLoading, router]);
+  }, [isAuthenticated, isLoading]);
 
   return (
     <Layout>
@@ -68,7 +75,14 @@ const FavoritesPage: NextPage = () => {
           </Link>
         </div>
 
-        {loading ? (
+        {!isAuthenticated && !isLoading ? (
+          <div className="alert alert-info mt-6">
+            <p>Чтобы посмотреть избранное, необходимо войти в аккаунт.</p>
+            <button className="btn btn-primary" onClick={openAuthModal}>
+              Войти
+            </button>
+          </div>
+        ) : loading ? (
           <div className="flex justify-center items-center py-12">
             <div className="loading-spinner"></div>
             <span className="ml-3 text-gray-600">Загрузка избранных объектов...</span>
@@ -126,6 +140,8 @@ const FavoritesPage: NextPage = () => {
           </div>
         )}
       </div>
+
+      <AuthModal isOpen={isAuthModalOpen} onClose={closeAuthModal} />
     </Layout>
   );
 };
