@@ -159,6 +159,7 @@ const createProperty = async (userId, input) => {
             is_new_building: input.is_new_building ?? false,
             is_commercial: input.is_commercial ?? false,
             is_country: input.is_country ?? false,
+            has_renovation: input.has_renovation ?? false,
             user_id: userId,
             images: {
                 create: input.images.map((url, index) => ({
@@ -193,6 +194,8 @@ const buildUpdateData = (input) => {
         data.is_commercial = input.is_commercial;
     if (input.is_country !== undefined)
         data.is_country = input.is_country;
+    if (input.has_renovation !== undefined)
+        data.has_renovation = input.has_renovation;
     const price = toFloat(input.price);
     const area = toFloat(input.area);
     const metroDistance = toFloat(input.metro_distance);

@@ -1,9 +1,10 @@
 // ai.service.ts
+// Базовый адрес API берём из той же переменной, что и остальной клиент
+// (NEXT_PUBLIC_API_URL уже включает суффикс "/api", напр. https://my-api.com/api).
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+
 export async function aiSearch(message: string) {
-  // ВАЖНО: Замените http://localhost:4000 на реальный адрес вашего бэкенда
-  const BACKEND_URL = "http://localhost:3001"; 
-  
-  const res = await fetch(`${BACKEND_URL}/api/ai/search`, {
+  const res = await fetch(`${API_URL}/ai/search`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ message }),

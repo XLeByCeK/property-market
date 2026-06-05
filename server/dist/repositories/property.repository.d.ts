@@ -52,6 +52,7 @@ export declare function searchProperties(aiFilters: any): Promise<{
     metro_distance: number | null;
     is_new_building: boolean;
     is_country: boolean;
+    has_renovation: boolean;
     status: string;
     user_id: number;
 }[]>;

@@ -85,6 +85,7 @@ export declare const findProperties: ({ where, orderBy, take }?: FindOptions) =>
     metro_distance: number | null;
     is_new_building: boolean;
     is_country: boolean;
+    has_renovation: boolean;
     status: string;
     user_id: number;
 })[]>;
@@ -157,6 +158,7 @@ export declare const findPropertiesByTransaction: (mode: SearchMode, take?: numb
     metro_distance: number | null;
     is_new_building: boolean;
     is_country: boolean;
+    has_renovation: boolean;
     status: string;
     user_id: number;
 })[]>;
@@ -229,6 +231,7 @@ export declare const getPropertyById: (id: number) => Prisma.Prisma__propertyCli
     metro_distance: number | null;
     is_new_building: boolean;
     is_country: boolean;
+    has_renovation: boolean;
     status: string;
     user_id: number;
 }) | null, null, import("@prisma/client/runtime/library").DefaultArgs>;
@@ -342,6 +345,7 @@ export declare const getUserProperties: (userId: number) => Prisma.PrismaPromise
     metro_distance: number | null;
     is_new_building: boolean;
     is_country: boolean;
+    has_renovation: boolean;
     status: string;
     user_id: number;
 })[]>;
@@ -364,6 +368,7 @@ export interface CreatePropertyInput {
     is_new_building?: boolean;
     is_commercial?: boolean;
     is_country?: boolean;
+    has_renovation?: boolean;
     images: string[];
 }
 export declare const createProperty: (userId: number, input: CreatePropertyInput) => Promise<{
@@ -430,6 +435,7 @@ export declare const createProperty: (userId: number, input: CreatePropertyInput
     metro_distance: number | null;
     is_new_building: boolean;
     is_country: boolean;
+    has_renovation: boolean;
     status: string;
     user_id: number;
 }>;
@@ -500,6 +506,7 @@ export declare const updateProperty: (id: number, input: UpdatePropertyInput) =>
     metro_distance: number | null;
     is_new_building: boolean;
     is_country: boolean;
+    has_renovation: boolean;
     status: string;
     user_id: number;
 }>;
@@ -525,6 +532,7 @@ export declare const deleteProperty: (id: number) => Prisma.Prisma__propertyClie
     metro_distance: number | null;
     is_new_building: boolean;
     is_country: boolean;
+    has_renovation: boolean;
     status: string;
     user_id: number;
 }, never, import("@prisma/client/runtime/library").DefaultArgs>;
@@ -592,6 +600,7 @@ export declare const listFavoriteProperties: (userId: number) => Promise<({
     metro_distance: number | null;
     is_new_building: boolean;
     is_country: boolean;
+    has_renovation: boolean;
     status: string;
     user_id: number;
 })[]>;
@@ -681,6 +690,7 @@ export declare const getViewHistory: (userId: number) => Promise<{
     metro_distance: number | null;
     is_new_building: boolean;
     is_country: boolean;
+    has_renovation: boolean;
     status: string;
     user_id: number;
 }[]>;
@@ -740,6 +750,7 @@ export declare const checkPropertyOwnership: (propertyId: number, user: {
         metro_distance: number | null;
         is_new_building: boolean;
         is_country: boolean;
+        has_renovation: boolean;
         status: string;
         user_id: number;
     };
