@@ -22,8 +22,14 @@ export const Header = () => {
   const handleHamburgerClick = () => {
     const mobileMenu = document.querySelector('.navbar-mobile');
     if (mobileMenu) {
-      mobileMenu.classList.add('visible');
-      document.body.style.overflow = 'hidden';
+      // toggle возвращает true, если класс добавлен, и false, если удален
+      const isVisible = mobileMenu.classList.toggle('visible');
+      
+      if (isVisible) {
+        document.body.style.overflow = 'hidden';
+      } else {
+        document.body.style.overflow = '';
+      }
     }
   };
 
