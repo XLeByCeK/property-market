@@ -47,7 +47,7 @@ export const UserMenu = () => {
   };
 
   // Выносим аватарку в отдельную переменную, чтобы не дублировать логику URL
-  const userAvatarSrc = user?.avatarUrl || PLACEHOLDER_AVATAR;
+  const userAvatarSrc = (user as any)?.avatarUrl || PLACEHOLDER_AVATAR;
 
   return (
     <>
